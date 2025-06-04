@@ -41,5 +41,7 @@ func main() {
 
 	router.POST("/webhook", middleware.GithubAuthorization(), controller.WebhookController)
 
+	slog.Info("Gin running")
+
 	router.Run(":8080")
 }
