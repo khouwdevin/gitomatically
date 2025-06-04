@@ -37,6 +37,8 @@ GITHUB_WEBHOOK_SECRET="helloworld" # you can get the secret sha256 when you regi
 
 ## Run app
 
+To run Gitomatically, you can use the provided `install.sh` script. You can also uninstall it using `uninstall.sh`.
+
 ## Notes
 
 Currently, only GitHub is supported. This is because I primarily use GitHub. However, if you're interested in using Gitomatically with GitLab, please let me know by opening an issue.
