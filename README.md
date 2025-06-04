@@ -23,7 +23,7 @@ repositories:
     url: https://github.com/example/example.com
     clone: git@github.com:example/example.com.git
     branch: main
-    path: ~/apps/example.com
+    path: ~/apps/example.com/
     builds:
       - docker compose up --build -d
 ```

@@ -45,7 +45,7 @@ func PreStart() error {
 		repoName := repoArr[len(repoArr)-1]
 
 		if err == nil {
-			_, err := os.Stat(repository.Path + "/" + ".git")
+			_, err := os.Stat(repository.Path + ".git")
 
 			if err != nil {
 				return err
@@ -60,7 +60,7 @@ func PreStart() error {
 				}
 
 				git := exec.Command("git", "clone", repository.Clone, repoName)
-				git.Dir = repository.Path + "/../"
+				git.Dir = repository.Path + "../"
 				git.Env = os.Environ()
 
 				_, err := git.Output()
@@ -87,14 +87,14 @@ func PreStart() error {
 			slog.Info(fmt.Sprintf("Adding %v", repository.Url))
 
 			dirPerms := os.FileMode(0755)
-			err := os.MkdirAll(repository.Path+"/../", dirPerms)
+			err := os.MkdirAll(repository.Path+"../", dirPerms)
 
 			if err != nil {
 				return err
 			}
 
 			git := exec.Command("git", "clone", repository.Clone, repoName)
-			git.Dir = repository.Path + "/../"
+			git.Dir = repository.Path + "../"
 			git.Env = os.Environ()
 
 			_, err = git.Output()
