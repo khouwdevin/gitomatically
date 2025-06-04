@@ -47,11 +47,9 @@ func PreStart() error {
 		if err == nil {
 			_, err := os.Stat(repository.Path + ".git")
 
-			if err != nil {
-				return err
-			}
-
-			if os.IsNotExist(err) {
+			if err == nil {
+				continue
+			} else if os.IsNotExist(err) {
 				slog.Info(fmt.Sprintf("Cloning %v", repository.Url))
 				err = os.Remove(repository.Path)
 
@@ -82,6 +80,8 @@ func PreStart() error {
 						return errors.New("Failed to run build command")
 					}
 				}
+			} else {
+				return err
 			}
 		} else if os.IsNotExist(err) {
 			slog.Info(fmt.Sprintf("Adding %v", repository.Url))

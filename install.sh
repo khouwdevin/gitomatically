@@ -74,6 +74,7 @@ WantedBy=multi-user.target
 EOF"
 echo "Service file '$SERVICE_NAME' created."
 
+# --- Configure systemctl ---
 sudo systemctl daemon-reload
 echo "Enabling service '$SERVICE_NAME' to start on boot..."
 sudo systemctl enable "$SERVICE_NAME"

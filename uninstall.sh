@@ -29,6 +29,7 @@ sudo rm -rf "$APP_DIR"
 sudo rm /etc/systemd/system/"$SERVICE_NAME"
 echo "Directory '$APP_DIR' and '$SERVICE_NAME' is deleted"
 
+# --- Remove configuration for systemctl ---
 sudo systemctl stop "$SERVICE_NAME"
 echo "Stopping '$SERVICE_NAME' service!"
 sudo systemctl disable "$SERVICE_NAME"
