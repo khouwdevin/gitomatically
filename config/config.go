@@ -2,6 +2,8 @@ package config
 
 import (
 	"errors"
+	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"strings"
@@ -50,6 +52,7 @@ func PreStart() error {
 			}
 
 			if os.IsNotExist(err) {
+				slog.Info(fmt.Sprintf("Cloning %v", repository.Url))
 				err = os.Remove(repository.Path)
 
 				if err != nil {
@@ -81,6 +84,8 @@ func PreStart() error {
 				}
 			}
 		} else if os.IsNotExist(err) {
+			slog.Info(fmt.Sprintf("Adding %v", repository.Url))
+
 			dirPerms := os.FileMode(0755)
 			err := os.MkdirAll(repository.Path+"/../", dirPerms)
 

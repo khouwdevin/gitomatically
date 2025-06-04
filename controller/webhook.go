@@ -1,7 +1,8 @@
 package controller
 
 import (
-	"log"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
@@ -51,7 +52,7 @@ func WebhookController(c *gin.Context) {
 	_, err := git.Output()
 
 	if err != nil {
-		log.Fatalf("Failed to pull branch %v", err)
+		slog.Error(fmt.Sprintf("Failed to pull branch %v", err))
 		return
 	}
 
@@ -65,7 +66,7 @@ func WebhookController(c *gin.Context) {
 		_, err := cmd.Output()
 
 		if err != nil {
-			log.Fatalf("Failed to run build command %v", build)
+			slog.Error(fmt.Sprintf("Failed to run build command %v", build))
 			return
 		}
 	}

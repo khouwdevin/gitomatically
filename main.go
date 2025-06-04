@@ -1,7 +1,8 @@
 package main
 
 import (
-	"log"
+	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,17 +13,23 @@ import (
 )
 
 func main() {
+	slog.SetLogLoggerLevel(slog.LevelInfo)
+
+	slog.Info("Powered by khouwdevin.com")
+
+	slog.Info("Initialize env")
 	err := env.InitializeEnv()
 
 	if err != nil {
-		log.Fatalf("Initialize env error %v", err)
+		slog.Error(fmt.Sprintf("Initialize env error %v", err))
 		return
 	}
 
+	slog.Info("Initialize config")
 	err = config.InitializeConfig()
 
 	if err != nil {
-		log.Fatalf("Initialize config error %v", err)
+		slog.Error(fmt.Sprintf("Initialize config error %v", err))
 		return
 	}
 
