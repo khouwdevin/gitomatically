@@ -1,32 +1,38 @@
 package main
 
 import (
-"fmt"
-"html/template"
-"net/http"
-"time"
+	"log"
+	"net/http"
 
-"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
+	"github.com/khouwdevin/gitomatically/config"
+	"github.com/khouwdevin/gitomatically/controller"
+	"github.com/khouwdevin/gitomatically/env"
+	"github.com/khouwdevin/gitomatically/middleware"
 )
 
-func formatAsDate(t time.Time) string {
-year, month, day := t.Date()
-return fmt.Sprintf("%d%02d/%02d", year, month, day)
-}
-
 func main() {
-router := gin.Default()
-router.Delims("{[{", "}]}")
-router.SetFuncMap(template.FuncMap{
-"formatAsDate": formatAsDate,
-})
-router.LoadHTMLFiles("./testdata/raw.tmpl")
+	err := env.InitializeEnv()
 
-router.GET("/raw", func(c *gin.Context) {
-c.HTML(http.StatusOK, "raw.tmpl", gin.H{
-"now": time.Date(2017, 0o7, 0o1, 0, 0, 0, 0, time.UTC),
-})
-})
+	if err != nil {
+		log.Fatalf("Initialize env error %v", err)
+		return
+	}
 
-router.Run(":8080")
+	err = config.InitializeConfig()
+
+	if err != nil {
+		log.Fatalf("Initialize config error %v", err)
+		return
+	}
+
+	router := gin.Default()
+
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "Welcome to gitomatically!"})
+	})
+
+	router.POST("/webhook", middleware.GithubAuthorization(), controller.WebhookController)
+
+	router.Run(":8080")
 }
