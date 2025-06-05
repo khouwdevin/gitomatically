@@ -31,8 +31,9 @@ Description=Gitomatically CI/CD Service
 After=network.target
 
 [Service]
-User=khouw
-Group=khouw
+Type=simple
+User=$APP_USER
+Group=$APP_GROUP
 WorkingDirectory=$APP_DIR
 ExecStart=$APP_DIR/$APP_BINARY
 EnvironmentFile=$APP_DIR/$ENV_FILE_NAME
