@@ -9,33 +9,6 @@ ENV_FILE_NAME=".env"
 CONFIG_FILE_NAME="config.yaml"
 SERVICE_NAME="gitomatically.service"
 
-# --- Add group and user ---
-if ! id -g "$APP_GROUP" >/dev/null 2>&1; then
-  sudo groupadd --system "$APP_GROUP"
-  echo "Group '$APP_GROUP' created."
-else
-  echo "Group '$APP_GROUP' already exists."
-fi
-
-if ! id -u "$APP_USER" >/dev/null 2>&1; then
-  sudo useradd --system --no-create-home --gid "$APP_GROUP" "$APP_USER"
-  echo "User '$APP_USER' created."
-else
-  echo "User '$APP_USER' already exists."
-fi
-
-if getent group docker >/dev/null 2>&1; then
-  if groups "$APP_USER" | grep -q '\bdocker\b'; then
-    echo "User '$APP_USER' is already a member of the 'docker' group."
-  else
-    sudo usermod -aG docker "$APP_USER"
-    echo "User '$APP_USER' added to 'docker' group."
-    echo "NOTE: For changes to take full effect, you might need to restart the system or at least the systemd service after setup."
-  fi
-else
-  echo "'docker' group does not exist. Is Docker installed? Skipping adding user to docker group."
-fi
-
 # --- Create app directory ---
 sudo mkdir -p "$APP_DIR"
 echo "Directory '$APP_DIR' created and permissions set."

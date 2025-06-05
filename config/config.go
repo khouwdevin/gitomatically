@@ -86,16 +86,10 @@ func PreStart() error {
 		} else if os.IsNotExist(err) {
 			slog.Info(fmt.Sprintf("Adding %v", repository.Url))
 
-			_, err := os.Stat(repository.Path)
+			dirPerms := os.FileMode(0755)
+			err := os.MkdirAll(repository.Path+"../", dirPerms)
 
-			if os.IsNotExist(err) {
-				dirPerms := os.FileMode(0755)
-				err := os.MkdirAll(repository.Path+"../", dirPerms)
-
-				if err != nil {
-					return err
-				}
-			} else if err != nil {
+			if err != nil {
 				return err
 			}
 
@@ -105,13 +99,9 @@ func PreStart() error {
 
 			_, err = git.Output()
 
-			slog.Info("1")
-
 			if err != nil {
 				return err
 			}
-
-			slog.Info("2")
 
 			for _, buildCommands := range repository.BuildCommands {
 				build := strings.Split(buildCommands, " ")
