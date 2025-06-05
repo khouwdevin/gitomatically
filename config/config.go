@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -51,14 +52,14 @@ func PreStart() error {
 				continue
 			} else if os.IsNotExist(err) {
 				slog.Info(fmt.Sprintf("Cloning %v", repository.Url))
-				err = os.Remove(repository.Path)
+				err = os.RemoveAll(repository.Path)
 
 				if err != nil {
 					return err
 				}
 
 				git := exec.Command("git", "clone", repository.Clone, repoName)
-				git.Dir = repository.Path + "../"
+				git.Dir = filepath.Dir(repository.Path)
 				git.Env = os.Environ()
 
 				_, err := git.Output()
@@ -87,14 +88,14 @@ func PreStart() error {
 			slog.Info(fmt.Sprintf("Adding %v", repository.Url))
 
 			dirPerms := os.FileMode(0755)
-			err := os.MkdirAll(repository.Path+"../", dirPerms)
+			err := os.MkdirAll(repository.Path, dirPerms)
 
 			if err != nil {
 				return err
 			}
 
 			git := exec.Command("git", "clone", repository.Clone, repoName)
-			git.Dir = repository.Path + "../"
+			git.Dir = filepath.Dir(repository.Path)
 			git.Env = os.Environ()
 
 			_, err = git.Output()
