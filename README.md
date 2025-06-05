@@ -35,9 +35,9 @@ GIN_MODE=release
 GITHUB_WEBHOOK_SECRET="helloworld" # you can create a secret when you register the webhook
 ```
 
-SSH Configuration, for Gitomatically to securely clone private repositories using SSH, you need to configure your SSH client. This setup allows your server to authenticate with GitHub using an SSH key.
+For Gitomatically to securely clone private repositories using SSH, you need to configure your SSH client. This setup allows your server to authenticate with GitHub using an SSH key.
 
-Create or edit your SSH configuration file, typically located at `~/.ssh/config` (for the user running Gitomatically, which will be gitomaticallyuser if you use the provided install.sh script).
+Create or edit your SSH configuration file, typically located at `~/.ssh/config`
 
 ```txt
 Host github.com
