@@ -100,6 +100,7 @@ func PreStart() error {
 			_, err = git.Output()
 
 			if err != nil {
+				defer os.RemoveAll(repository.Path)
 				return err
 			}
 
