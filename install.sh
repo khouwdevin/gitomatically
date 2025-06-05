@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # --- Configuration ---
-APP_USER="gitomatically"
-APP_GROUP="gitomatically"
+APP_USER=$(whoami)
+APP_GROUP=$(whoami)
 APP_DIR="/opt/gitomatically"
 APP_BINARY="gitomatically"
 ENV_FILE_NAME=".env"
@@ -31,9 +31,8 @@ Description=Gitomatically CI/CD Service
 After=network.target
 
 [Service]
-Type=simple
-User=root
-Group=root
+User=khouw
+Group=khouw
 WorkingDirectory=$APP_DIR
 ExecStart=$APP_DIR/$APP_BINARY
 EnvironmentFile=$APP_DIR/$ENV_FILE_NAME
