@@ -42,8 +42,7 @@ func PreStart() error {
 	for _, repository := range Settings.Repositories {
 		_, err := os.Stat(repository.Path)
 
-		repoArr := strings.Split(repository.Path, "/")
-		repoName := repoArr[len(repoArr)-1]
+		repoName := filepath.Base(repository.Path)
 
 		if err == nil {
 			_, err := os.Stat(repository.Path + ".git")
