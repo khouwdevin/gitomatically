@@ -35,6 +35,18 @@ GIN_MODE=release
 GITHUB_WEBHOOK_SECRET="helloworld" # you can create a secret when you register the webhook
 ```
 
+SSH Configuration, for Gitomatically to securely clone private repositories using SSH, you need to configure your SSH client. This setup allows your server to authenticate with GitHub using an SSH key.
+
+Create or edit your SSH configuration file, typically located at `~/.ssh/config` (for the user running Gitomatically, which will be gitomaticallyuser if you use the provided install.sh script).
+
+```txt
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/{your_ssh_private_key_file} # e.g., ~/.ssh/id_rsa or ~/.ssh/gitomatically_ssh_key
+  IdentitiesOnly yes
+```
+
 ### (Optional) Enabling SSL with Certbot (Using Nginx Reverse Proxy)
 
 To secure your Gitomatically application with SSL/TLS (HTTPS) using a free Let's Encrypt certificate, you'll typically set up a reverse proxy like Nginx to handle the SSL termination and forward requests to your Gitomatically app running on port 8080.
