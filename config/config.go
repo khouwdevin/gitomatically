@@ -86,15 +86,16 @@ func PreStart() error {
 		} else if os.IsNotExist(err) {
 			slog.Info(fmt.Sprintf("Adding %v", repository.Url))
 
+			dir := filepath.Dir(repository.Path)
 			dirPerms := os.FileMode(0755)
-			err := os.MkdirAll(repository.Path, dirPerms)
+			err := os.MkdirAll(dir, dirPerms)
 
 			if err != nil {
 				return err
 			}
 
 			git := exec.Command("git", "clone", repository.Clone, repoName)
-			git.Dir = filepath.Dir(repository.Path)
+			git.Dir = dir
 			git.Env = os.Environ()
 
 			_, err = git.Output()
