@@ -14,7 +14,7 @@ import (
 )
 
 func WebhookController(c *gin.Context) {
-	c.JSON(http.StatusInternalServerError, gin.H{"message": "Request receive"})
+	c.JSON(http.StatusOK, gin.H{"message": "Webhook receive"})
 
 	var payload map[string]any
 
