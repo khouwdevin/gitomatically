@@ -16,14 +16,14 @@ repositories:
     url: { github repository url }
     clone: { github clone url (using SSH is suggested) }
     branch: { which branch you want to pull }
-    path: { path to your apps }
+    path: { path to your apps (do not add / or \ at the end unless it will not work) }
     builds:
       - { build commands, you can leave it empty if you don't need to build }
   example.com:
     url: https://github.com/example/example.com
     clone: git@github.com:example/example.com.git
     branch: main
-    path: /home/khouwdevin/apps/example.com/
+    path: /home/khouwdevin/apps/example.com
     builds:
       - docker compose up --build -d
 ```
