@@ -37,6 +37,7 @@ Additionally, you need to create an `.env` file with the following content:
 GIN_MODE=release
 GITHUB_WEBHOOK_SECRET="helloworld" # you can create a secret when you register the webhook
 LOG_LEVEL=0 # 0 = Info | -4 = Debug | 4 = Warn | 8 = Error
+PORT=8080 # the default is 8080
 ```
 
 For Gitomatically to securely clone private repositories using SSH, you need to configure your SSH client. This setup allows your server to authenticate with GitHub using an SSH key.

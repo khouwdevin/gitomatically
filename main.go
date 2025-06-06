@@ -46,5 +46,5 @@ func main() {
 
 	slog.Info("MAIN Gin running")
 
-	router.Run(":8080")
+	router.Run(fmt.Sprintf(":%v", env.Env.PORT))
 }
