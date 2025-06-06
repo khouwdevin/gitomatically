@@ -16,15 +16,18 @@ repositories:
     url: { github repository url }
     clone: { github clone url (using SSH is suggested) }
     branch: { which branch you want to pull }
-    path: { path to your apps (do not add / or \ at the end unless it will not work) }
-    builds:
-      - { build commands, you can leave it empty if you don't need to build }
+    path:
+      {
+        path to your apps (do not add / or \ at the end unless it will not work),
+      }
+    commands:
+      - { commands, you can leave it empty if you don't need to do command }
   example.com:
     url: https://github.com/example/example.com
     clone: git@github.com:example/example.com.git
     branch: main
     path: /home/khouwdevin/apps/example.com
-    builds:
+    commands:
       - docker compose up --build -d
 ```
 
@@ -33,6 +36,7 @@ Additionally, you need to create an `.env` file with the following content:
 ```env
 GIN_MODE=release
 GITHUB_WEBHOOK_SECRET="helloworld" # you can create a secret when you register the webhook
+LOG_LEVEL=0 # 0 = Info | -4 = Debug | 4 = Warn | 8 = Error
 ```
 
 For Gitomatically to securely clone private repositories using SSH, you need to configure your SSH client. This setup allows your server to authenticate with GitHub using an SSH key.

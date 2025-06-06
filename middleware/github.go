@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,6 +27,8 @@ func GithubAuthorization() gin.HandlerFunc {
 		signatureHeader := c.GetHeader("X-Hub-Signature-256")
 
 		if signatureHeader == "" {
+			slog.Debug("[Middleware] Signature is not found")
+
 			c.JSON(http.StatusUnauthorized, gin.H{"Message": "X-Hub-Signature-256 is not found!"})
 			c.Abort()
 
@@ -47,6 +50,8 @@ func GithubAuthorization() gin.HandlerFunc {
 		computedSignature := hex.EncodeToString(mac.Sum(nil))
 
 		if !hmac.Equal([]byte(computedSignature), []byte(expectedSignature)) {
+			slog.Debug("[Middleware] Signature is not match")
+
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "StatusUnauthorized"})
 			c.Abort()
 

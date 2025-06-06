@@ -45,12 +45,12 @@ func PreStart() error {
 		repoName := filepath.Base(repository.Path)
 
 		if err == nil {
-			_, err := os.Stat(repository.Path + ".git")
+			_, err := os.Stat(filepath.Join(repository.Path, ".git"))
 
 			if err == nil {
 				continue
 			} else if os.IsNotExist(err) {
-				slog.Info(fmt.Sprintf("Cloning %v", repository.Url))
+				slog.Info(fmt.Sprintf("CONFIG Cloning %v", repository.Url))
 				err = os.RemoveAll(repository.Path)
 
 				if err != nil {
@@ -67,24 +67,26 @@ func PreStart() error {
 					return err
 				}
 
-				for _, buildCommands := range repository.BuildCommands {
-					build := strings.Split(buildCommands, " ")
+				for _, command := range repository.Commands {
+					slog.Debug(fmt.Sprintf("CONFIG Running %v", command))
 
-					cmd := exec.Command(build[0], build[1:]...)
+					arrCommand := strings.Split(command, " ")
+
+					cmd := exec.Command(arrCommand[0], arrCommand[1:]...)
 					cmd.Dir = repository.Path
 					cmd.Env = os.Environ()
 
 					_, err := cmd.Output()
 
 					if err != nil {
-						return errors.New("Failed to run build command")
+						return errors.New("Failed to run command")
 					}
 				}
 			} else {
 				return err
 			}
 		} else if os.IsNotExist(err) {
-			slog.Info(fmt.Sprintf("Adding %v", repository.Url))
+			slog.Info(fmt.Sprintf("CONFIG Adding %v", repository.Url))
 
 			dir := filepath.Dir(repository.Path)
 			dirPerms := os.FileMode(0755)
@@ -105,17 +107,19 @@ func PreStart() error {
 				return err
 			}
 
-			for _, buildCommands := range repository.BuildCommands {
-				build := strings.Split(buildCommands, " ")
+			for _, command := range repository.Commands {
+				slog.Debug(fmt.Sprintf("CONFIG Running %v", command))
 
-				cmd := exec.Command(build[0], build[1:]...)
+				arrCommand := strings.Split(command, " ")
+
+				cmd := exec.Command(arrCommand[0], arrCommand[1:]...)
 				cmd.Dir = repository.Path
 				cmd.Env = os.Environ()
 
 				_, err := cmd.Output()
 
 				if err != nil {
-					return errors.New("Failed to run build command")
+					return errors.New("Failed to run command")
 				}
 			}
 		} else {

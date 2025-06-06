@@ -52,21 +52,23 @@ func WebhookController(c *gin.Context) {
 	_, err := git.Output()
 
 	if err != nil {
-		slog.Error(fmt.Sprintf("Failed to pull branch %v", err))
+		slog.Error(fmt.Sprintf("WEBHOOK Failed to pull branch %v", err))
 		return
 	}
 
-	for _, buildCommands := range currentRepo.BuildCommands {
-		build := strings.Split(buildCommands, " ")
+	for _, command := range currentRepo.Commands {
+		slog.Debug(fmt.Sprintf("Running %v", command))
 
-		cmd := exec.Command(build[0], build[1:]...)
+		arrCommand := strings.Split(command, " ")
+
+		cmd := exec.Command(arrCommand[0], arrCommand[1:]...)
 		cmd.Dir = currentRepo.Path
 		cmd.Env = os.Environ()
 
 		_, err := cmd.Output()
 
 		if err != nil {
-			slog.Error(fmt.Sprintf("Failed to run build command %v", build))
+			slog.Error(fmt.Sprintf("WEBHOOK Failed to run build command %v", arrCommand))
 			return
 		}
 	}
