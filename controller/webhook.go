@@ -13,19 +13,32 @@ import (
 	"github.com/khouwdevin/gitomatically/config"
 )
 
+type GithubResponse struct {
+	Repository struct {
+		HtmlUrl string `json:"html_url"`
+	}
+	Ref string
+}
+
 func WebhookController(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Webhook receive"})
 
-	var payload map[string]any
+	event := c.GetHeader("X-GitHub-Event")
 
-	if err := c.BindJSON(&payload); err != nil {
+	if event != "push" {
+		slog.Debug("WEBHOOK Not a push event")
+		return
+	}
+
+	var response GithubResponse
+
+	if err := c.BindJSON(&response); err != nil {
 		return
 	}
 
 	var currentRepo config.RepositoryConfig
 
-	repository := payload["repository"].(map[string]any)
-	htmlUrl := repository["html_url"].(string)
+	htmlUrl := response.Repository.HtmlUrl
 
 	for _, repository := range config.Settings.Repositories {
 		if repository.Url == htmlUrl {
@@ -38,8 +51,7 @@ func WebhookController(c *gin.Context) {
 		return
 	}
 
-	ref := payload["ref"].(string)
-	branch := strings.Split(ref, "/")[2]
+	branch := strings.Split(response.Ref, "/")[2]
 
 	if branch != currentRepo.Branch {
 		return
@@ -57,7 +69,7 @@ func WebhookController(c *gin.Context) {
 	}
 
 	for _, command := range currentRepo.Commands {
-		slog.Debug(fmt.Sprintf("Running %v", command))
+		slog.Debug(fmt.Sprintf("WEBHOOK Running %v", command))
 
 		arrCommand := strings.Split(command, " ")
 

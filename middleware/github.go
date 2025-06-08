@@ -15,15 +15,6 @@ import (
 
 func GithubAuthorization() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event := c.GetHeader("X-GitHub-Event")
-
-		if event != "push" {
-			c.JSON(http.StatusOK, gin.H{"message": "Not a push event"})
-			c.Abort()
-
-			return
-		}
-
 		signatureHeader := c.GetHeader("X-Hub-Signature-256")
 
 		if signatureHeader == "" {

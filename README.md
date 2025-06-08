@@ -11,6 +11,9 @@ Gitomatically is an app designed to implement CI/CD with ease. You can write the
 To configure Gitomatically for your desired repositories, create a `config.yaml` file in your project folder using the following guide:
 
 ```yaml
+preference:
+  cron: true { true | false, if false it will use webhook }
+  spec: '*/30 * * * * *' { rerun every 30 seconds }
 repositories:
   { repository-name (you can name it whatever you want) }:
     url: { github repository url }

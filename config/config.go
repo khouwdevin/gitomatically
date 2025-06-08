@@ -29,6 +29,10 @@ func InitializeConfig() error {
 		return err
 	}
 
+	if Settings.Preference.Cron && Settings.Preference.Spec == "" {
+		return errors.New("duration value is required.")
+	}
+
 	err = PreStart()
 
 	if err != nil {
@@ -79,7 +83,7 @@ func PreStart() error {
 					_, err := cmd.Output()
 
 					if err != nil {
-						return errors.New("Failed to run command")
+						return errors.New("failed to run command")
 					}
 				}
 			} else {
@@ -119,7 +123,7 @@ func PreStart() error {
 				_, err := cmd.Output()
 
 				if err != nil {
-					return errors.New("Failed to run command")
+					return errors.New("failed to run command")
 				}
 			}
 		} else {

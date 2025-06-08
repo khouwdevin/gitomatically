@@ -10,6 +10,7 @@ import (
 	"github.com/khouwdevin/gitomatically/controller"
 	"github.com/khouwdevin/gitomatically/env"
 	"github.com/khouwdevin/gitomatically/middleware"
+	"github.com/robfig/cron"
 )
 
 func main() {
@@ -36,15 +37,32 @@ func main() {
 		return
 	}
 
-	router := gin.Default()
+	if config.Settings.Preference.Cron {
+		ccron := cron.New()
 
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Welcome to gitomatically!"})
-	})
+		err := ccron.AddFunc(config.Settings.Preference.Spec, controller.CronController)
 
-	router.POST("/webhook", middleware.GithubAuthorization(), controller.WebhookController)
+		if err != nil {
+			slog.Error(fmt.Sprintf("CRON Error adding job %v", err))
+			return
+		}
 
-	slog.Info("MAIN Gin running")
+		ccron.Start()
 
-	router.Run(fmt.Sprintf(":%v", env.Env.PORT))
+		slog.Info("CRON Cron jobs started")
+
+		select {}
+	} else {
+		router := gin.Default()
+
+		router.GET("/", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{"message": "Welcome to gitomatically!"})
+		})
+
+		router.POST("/webhook", middleware.GithubAuthorization(), controller.WebhookController)
+
+		slog.Info("MAIN Gin running")
+
+		router.Run(fmt.Sprintf(":%v", env.Env.PORT))
+	}
 }
