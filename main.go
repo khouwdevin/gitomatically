@@ -3,17 +3,20 @@ package main
 import (
 	"fmt"
 	"log/slog"
-	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/gin-gonic/gin"
 	"github.com/khouwdevin/gitomatically/config"
 	"github.com/khouwdevin/gitomatically/controller"
 	"github.com/khouwdevin/gitomatically/env"
-	"github.com/khouwdevin/gitomatically/middleware"
-	"github.com/robfig/cron"
+	"github.com/khouwdevin/gitomatically/watcher"
 )
 
 func main() {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
 	slog.SetLogLoggerLevel(slog.LevelInfo)
 
 	err := env.InitializeEnv()
@@ -37,32 +40,36 @@ func main() {
 		return
 	}
 
-	if config.Settings.Preference.Cron {
-		ccron := cron.New()
+	watcher.ConfigWatcher()
+	watcher.EnvWatcher()
 
-		err := ccron.AddFunc(config.Settings.Preference.Spec, controller.CronController)
+	if config.Settings.Preference.Cron {
+		err := controller.NewCron()
 
 		if err != nil {
-			slog.Error(fmt.Sprintf("CRON Error adding job %v", err))
-			return
+			slog.Error(fmt.Sprintf("CRON Create new cron error %v", err))
 		}
 
-		ccron.Start()
+		<-quit
 
-		slog.Info("CRON Cron jobs started")
+		err = controller.StopCron()
 
-		select {}
+		if err != nil {
+			slog.Error(fmt.Sprintf("CRON Stopping cron error %v", err))
+		}
 	} else {
-		router := gin.Default()
+		err := controller.NewServer()
 
-		router.GET("/", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"message": "Welcome to gitomatically!"})
-		})
+		if err != nil {
+			slog.Error(fmt.Sprintf("MAIN Server error %v", err))
+		}
 
-		router.POST("/webhook", middleware.GithubAuthorization(), controller.WebhookController)
+		<-quit
 
-		slog.Info("MAIN Gin running")
+		err = controller.ShutdownServer()
 
-		router.Run(fmt.Sprintf(":%v", env.Env.PORT))
+		if err != nil {
+			slog.Error(fmt.Sprintf("MAIN Shutdown server error %v", err))
+		}
 	}
 }

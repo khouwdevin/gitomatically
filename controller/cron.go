@@ -6,9 +6,84 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 
 	"github.com/khouwdevin/gitomatically/config"
+	"github.com/robfig/cron"
 )
+
+var (
+	Ccron     *cron.Cron
+	cronMutex sync.RWMutex
+)
+
+func NewCron() error {
+	cronMutex.Lock()
+	defer cronMutex.Unlock()
+
+	if Ccron != nil {
+		slog.Debug("CRON Stopping existing cron instance before creating new one")
+		Ccron.Stop()
+	}
+
+	Ccron = cron.New()
+
+	err := Ccron.AddFunc(config.Settings.Preference.Spec, CronController)
+
+	if err != nil {
+		return err
+	}
+
+	Ccron.Start()
+
+	slog.Info("CRON Cron jobs started")
+
+	return nil
+}
+
+func ChangeCron() error {
+	if Ccron == nil {
+		NewCron()
+		return nil
+	}
+
+	cronMutex.Lock()
+	defer cronMutex.Unlock()
+
+	Ccron.Stop()
+	slog.Debug("CRON Stopping current existing cron")
+
+	Ccron = cron.New()
+
+	err := Ccron.AddFunc(config.Settings.Preference.Spec, CronController)
+
+	if err != nil {
+		return err
+	}
+
+	Ccron.Start()
+
+	slog.Info("CRON Cron jobs restarted")
+
+	return nil
+}
+
+func StopCron() error {
+	if Ccron == nil {
+		return nil
+	}
+
+	cronMutex.Lock()
+	defer cronMutex.Unlock()
+
+	Ccron.Stop()
+
+	Ccron = nil
+
+	slog.Info("CRON Stopping current cron")
+
+	return nil
+}
 
 func CronController() {
 	slog.Debug("CRON Rerun all config")

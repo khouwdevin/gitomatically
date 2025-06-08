@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -8,9 +9,12 @@ import (
 	"os/exec"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/khouwdevin/gitomatically/config"
+	"github.com/khouwdevin/gitomatically/env"
+	"github.com/khouwdevin/gitomatically/middleware"
 )
 
 type GithubResponse struct {
@@ -18,6 +22,60 @@ type GithubResponse struct {
 		HtmlUrl string `json:"html_url"`
 	}
 	Ref string
+}
+
+var (
+	Server *http.Server
+)
+
+func NewServer() error {
+	if Server != nil {
+		ShutdownServer()
+	}
+
+	router := gin.Default()
+
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "Welcome to gitomatically!"})
+	})
+
+	router.POST("/webhook", middleware.GithubAuthorization(), WebhookController)
+
+	slog.Info("MAIN Gin running")
+
+	Server = &http.Server{
+		Addr:    fmt.Sprintf(":%v", env.Env.PORT),
+		Handler: router,
+	}
+
+	go func() {
+		if err := Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("Gin server error", "error", err)
+		}
+	}()
+
+	return nil
+}
+
+func ShutdownServer() error {
+	if Server == nil {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := Server.Shutdown(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	Server = nil
+
+	slog.Info("WEBHOOK Server is shutdown")
+
+	return nil
 }
 
 func WebhookController(c *gin.Context) {
