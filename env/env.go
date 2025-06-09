@@ -12,19 +12,19 @@ var (
 	Env EnvType
 )
 
-func InitializeEnv() error {
+func InitializeEnv(filePath string) error {
 	if Env.GITHUB_WEBHOOK_SECRET != "" {
-		err := godotenv.Overload(".env")
+		err := godotenv.Overload(filePath)
 
 		if err != nil {
 			return err
 		}
-	}
+	} else {
+		err := godotenv.Load(filePath)
 
-	err := godotenv.Load()
-
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	GITHUB_WEBHOOK_SECRET := os.Getenv("GITHUB_WEBHOOK_SECRET")
@@ -32,14 +32,18 @@ func InitializeEnv() error {
 	LOG_LEVEL := os.Getenv("LOG_LEVEL")
 	PORT := os.Getenv("PORT")
 
-	if GIN_MODE == "" {
-		return errors.New("GIN_MODE env variable is required")
-	} else if LOG_LEVEL == "" {
+	if LOG_LEVEL == "" {
 		return errors.New("LOG_LEVEL env variable is required")
 	}
 
 	if PORT == "" {
 		PORT = "8080"
+	}
+	if GIN_MODE == "" {
+		GIN_MODE = "release"
+	}
+	if GITHUB_WEBHOOK_SECRET == "" {
+		GITHUB_WEBHOOK_SECRET = "empty"
 	}
 
 	LOG_LEVEL_INT, err := strconv.Atoi(LOG_LEVEL)

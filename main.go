@@ -23,7 +23,7 @@ func main() {
 
 	slog.SetLogLoggerLevel(slog.LevelInfo)
 
-	err := env.InitializeEnv()
+	err := env.InitializeEnv(".env")
 
 	if err != nil {
 		slog.Error(fmt.Sprintf("MAIN Initialize env error %v", err))
@@ -37,7 +37,7 @@ func main() {
 	slog.Info("MAIN Initialize env")
 
 	slog.Info("MAIN Initialize config")
-	err = config.InitializeConfig()
+	err = config.InitializeConfig("config.yaml")
 
 	if err != nil {
 		slog.Error(fmt.Sprintf("MAIN Initialize config error %v", err))

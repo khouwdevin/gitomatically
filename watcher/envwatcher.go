@@ -26,7 +26,7 @@ func envDebouncedEvents(quit chan os.Signal) {
 
 	envTimer = time.AfterFunc(100*time.Millisecond, func() {
 		slog.Info("WATCHER Env file change detected, reinitialize env")
-		err := env.InitializeEnv()
+		err := env.InitializeEnv(".env")
 
 		if err != nil {
 			slog.Error(fmt.Sprintf("WATCHER Reinitialize env error %v", err))
