@@ -32,8 +32,10 @@ func InitializeEnv() error {
 	LOG_LEVEL := os.Getenv("LOG_LEVEL")
 	PORT := os.Getenv("PORT")
 
-	if GITHUB_WEBHOOK_SECRET == "" || GIN_MODE == "" || LOG_LEVEL == "" {
-		return errors.New("Env variables are not complete")
+	if GIN_MODE == "" {
+		return errors.New("GIN_MODE env variable is required")
+	} else if LOG_LEVEL == "" {
+		return errors.New("LOG_LEVEL env variable is required")
 	}
 
 	if PORT == "" {

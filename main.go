@@ -44,6 +44,11 @@ func main() {
 		return
 	}
 
+	if !config.Settings.Preference.Cron && env.Env.GITHUB_WEBHOOK_SECRET == "" {
+		slog.Error("MAIN Github webhook secret is required")
+		return
+	}
+
 	configStopChan := make(chan struct{})
 	envStopChan := make(chan struct{})
 
