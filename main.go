@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/khouwdevin/gitomatically/config"
@@ -14,6 +15,9 @@ import (
 )
 
 func main() {
+	var wg sync.WaitGroup
+	wg.Add(2)
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
@@ -40,36 +44,59 @@ func main() {
 		return
 	}
 
-	watcher.ConfigWatcher()
-	watcher.EnvWatcher()
+	configStopChan := make(chan struct{})
+	envStopChan := make(chan struct{})
+
+	err = watcher.ConfigWatcher(configStopChan, &wg, quit)
+
+	if err != nil {
+		slog.Error(fmt.Sprintf("MAIN %v", err))
+		return
+	}
+
+	err = watcher.EnvWatcher(envStopChan, &wg, quit)
+
+	if err != nil {
+		slog.Error(fmt.Sprintf("MAIN %v", err))
+		return
+	}
 
 	if config.Settings.Preference.Cron {
 		err := controller.NewCron()
 
 		if err != nil {
-			slog.Error(fmt.Sprintf("CRON Create new cron error %v", err))
-		}
-
-		<-quit
-
-		err = controller.StopCron()
-
-		if err != nil {
-			slog.Error(fmt.Sprintf("CRON Stopping cron error %v", err))
+			slog.Error(fmt.Sprintf("MAIN Create new cron error %v", err))
+			return
 		}
 	} else {
 		err := controller.NewServer()
 
 		if err != nil {
 			slog.Error(fmt.Sprintf("MAIN Server error %v", err))
+			return
 		}
+	}
 
-		<-quit
+	<-quit
 
+	if config.Settings.Preference.Cron {
+		err = controller.StopCron()
+
+		if err != nil {
+			slog.Error(fmt.Sprintf("MAIN Stopping cron error %v", err))
+		}
+	} else {
 		err = controller.ShutdownServer()
 
 		if err != nil {
 			slog.Error(fmt.Sprintf("MAIN Shutdown server error %v", err))
 		}
 	}
+
+	close(configStopChan)
+	close(envStopChan)
+
+	slog.Debug("MAIN Closing watcher for config and env channel")
+
+	wg.Wait()
 }

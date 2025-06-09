@@ -13,6 +13,14 @@ var (
 )
 
 func InitializeEnv() error {
+	if Env.GITHUB_WEBHOOK_SECRET != "" {
+		err := godotenv.Overload(".env")
+
+		if err != nil {
+			return err
+		}
+	}
+
 	err := godotenv.Load()
 
 	if err != nil {
@@ -27,6 +35,7 @@ func InitializeEnv() error {
 	if GITHUB_WEBHOOK_SECRET == "" || GIN_MODE == "" || LOG_LEVEL == "" {
 		return errors.New("Env variables are not complete")
 	}
+
 	if PORT == "" {
 		PORT = "8080"
 	}

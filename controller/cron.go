@@ -42,13 +42,13 @@ func NewCron() error {
 }
 
 func ChangeCron() error {
+	cronMutex.Lock()
+	defer cronMutex.Unlock()
+
 	if Ccron == nil {
 		NewCron()
 		return nil
 	}
-
-	cronMutex.Lock()
-	defer cronMutex.Unlock()
 
 	Ccron.Stop()
 	slog.Debug("CRON Stopping current existing cron")
@@ -69,12 +69,12 @@ func ChangeCron() error {
 }
 
 func StopCron() error {
+	cronMutex.Lock()
+	defer cronMutex.Unlock()
+
 	if Ccron == nil {
 		return nil
 	}
-
-	cronMutex.Lock()
-	defer cronMutex.Unlock()
 
 	Ccron.Stop()
 
@@ -94,12 +94,14 @@ func CronController() {
 		git.Env = os.Environ()
 
 		stdout, err := git.Output()
+		output := strings.TrimSpace(string(stdout))
 
 		if err != nil {
 			slog.Error(fmt.Sprintf("CRON Git pull error %v", err))
-		}
+			slog.Error(fmt.Sprintf("CRON Git output %v", output))
 
-		output := strings.TrimSpace(string(stdout))
+			continue
+		}
 
 		if strings.Contains(output, "Already up to date.") {
 			slog.Debug("CRON Git is up to date, continue to next repository")
@@ -119,6 +121,7 @@ func CronController() {
 
 			if err != nil {
 				slog.Error("CRON Failed to run command")
+				break
 			}
 		}
 	}

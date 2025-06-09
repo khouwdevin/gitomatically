@@ -73,7 +73,7 @@ func ShutdownServer() error {
 
 	Server = nil
 
-	slog.Info("WEBHOOK Server is shutdown")
+	slog.Info("WEBHOOK Server is off")
 
 	return nil
 }
@@ -119,10 +119,13 @@ func WebhookController(c *gin.Context) {
 	git.Dir = currentRepo.Path
 	git.Env = os.Environ()
 
-	_, err := git.Output()
+	stdout, err := git.Output()
+	output := strings.TrimSpace(string(stdout))
 
 	if err != nil {
 		slog.Error(fmt.Sprintf("WEBHOOK Failed to pull branch %v", err))
+		slog.Error(fmt.Sprintf("WEBHOOK Git output %v", output))
+
 		return
 	}
 
@@ -139,7 +142,7 @@ func WebhookController(c *gin.Context) {
 
 		if err != nil {
 			slog.Error(fmt.Sprintf("WEBHOOK Failed to run build command %v", arrCommand))
-			return
+			break
 		}
 	}
 
