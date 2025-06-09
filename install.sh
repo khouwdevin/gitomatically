@@ -18,8 +18,8 @@ go build -o ./gitomatically ./main.go
 
 # --- Copy files ---
 sudo cp ./"$APP_BINARY" "$APP_DIR"/"$APP_BINARY"
-sudo ln -s ./"$CONFIG_FILE_NAME" "$APP_DIR"/"$CONFIG_FILE_NAME"
-sudo ln -s ./"$ENV_FILE_NAME" "$APP_DIR"/"$ENV_FILE_NAME"
+sudo ln -s $(pwd)/"$CONFIG_FILE_NAME" "$APP_DIR"/"$CONFIG_FILE_NAME"
+sudo ln -s $(pwd)/"$ENV_FILE_NAME" "$APP_DIR"/"$ENV_FILE_NAME"
 
 # --- Change files owner ---
 sudo chmod +x "$APP_DIR"/"$APP_BINARY"
