@@ -16,8 +16,8 @@ var (
 	Settings Config
 )
 
-func InitializeConfig() error {
-	yamlFile, err := os.ReadFile("config.yaml")
+func InitializeConfig(filePath string) error {
+	yamlFile, err := os.ReadFile(filePath)
 
 	if err != nil {
 		return err
@@ -29,6 +29,9 @@ func InitializeConfig() error {
 		return err
 	}
 
+	if len(Settings.Repositories) == 0 {
+		return errors.New("there is no repository in config.")
+	}
 	if Settings.Preference.Cron && Settings.Preference.Spec == "" {
 		return errors.New("duration value is required.")
 	}

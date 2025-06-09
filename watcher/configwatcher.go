@@ -26,7 +26,7 @@ func configDebouncedEvents(quit chan os.Signal) {
 
 	configTimer = time.AfterFunc(100*time.Millisecond, func() {
 		slog.Info("WATCHER Config file change detected, reinitialize config")
-		err := config.InitializeConfig()
+		err := config.InitializeConfig("config.yaml")
 
 		if err != nil {
 			slog.Error(fmt.Sprintf("WATCHER Reinitialize config error %v", err))
