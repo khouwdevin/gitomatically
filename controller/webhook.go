@@ -13,7 +13,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/khouwdevin/gitomatically/config"
-	"github.com/khouwdevin/gitomatically/env"
 	"github.com/khouwdevin/gitomatically/middleware"
 )
 
@@ -44,13 +43,13 @@ func NewServer() error {
 	slog.Info("MAIN Gin running")
 
 	Server = &http.Server{
-		Addr:    fmt.Sprintf(":%v", env.Env.PORT),
+		Addr:    fmt.Sprintf(":%v", os.Getenv("PORT")),
 		Handler: router,
 	}
 
 	go func() {
 		if err := Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			slog.Error("Gin server error", "error", err)
+			slog.Error(fmt.Sprintf("Gin server error %v", err))
 		}
 	}()
 

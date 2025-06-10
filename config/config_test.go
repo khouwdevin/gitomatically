@@ -36,7 +36,7 @@ func TestInitializeConfigSuccess(t *testing.T) {
 			Spec: "*/30 * * * * *",
 		},
 		Repositories: map[string]RepositoryConfig{
-			"stalker-bot": {
+			"gitomatically": {
 				Url:      "https://github.com/khouwdevin/gitomatically",
 				Clone:    "git@github.com:khouwdevin/gitomatically.git",
 				Branch:   "master",

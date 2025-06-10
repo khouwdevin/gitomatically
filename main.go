@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 
@@ -30,7 +31,14 @@ func main() {
 		return
 	}
 
-	slog.SetLogLoggerLevel(slog.Level(env.Env.LOG_LEVEL))
+	LOG_LEVEL_INT, err := strconv.Atoi(os.Getenv("LOG_LEVEL"))
+
+	if err != nil {
+		slog.Error(fmt.Sprintf("MAIN Error convert string to int %v", err))
+		return
+	}
+
+	slog.SetLogLoggerLevel(slog.Level(LOG_LEVEL_INT))
 
 	slog.Info("MAIN Powered by khouwdevin.com")
 
@@ -44,7 +52,7 @@ func main() {
 		return
 	}
 
-	if !config.Settings.Preference.Cron && env.Env.GITHUB_WEBHOOK_SECRET == "" {
+	if !config.Settings.Preference.Cron && os.Getenv("GITHUB_WEBHOOK_SECRET") == "" {
 		slog.Error("MAIN Github webhook secret is required")
 		return
 	}
@@ -52,14 +60,14 @@ func main() {
 	configStopChan := make(chan struct{})
 	envStopChan := make(chan struct{})
 
-	err = watcher.ConfigWatcher(configStopChan, &wg, quit)
+	err = watcher.ConfigWatcher("config.yaml", configStopChan, &wg, quit)
 
 	if err != nil {
 		slog.Error(fmt.Sprintf("MAIN %v", err))
 		return
 	}
 
-	err = watcher.EnvWatcher(envStopChan, &wg, quit)
+	err = watcher.EnvWatcher(".env", envStopChan, &wg, quit)
 
 	if err != nil {
 		slog.Error(fmt.Sprintf("MAIN %v", err))

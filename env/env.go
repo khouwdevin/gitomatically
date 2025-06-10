@@ -8,12 +8,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var (
-	Env EnvType
-)
-
 func InitializeEnv(filePath string) error {
-	if Env.GITHUB_WEBHOOK_SECRET != "" {
+	if os.Getenv("GITHUB_WEBHOOK_SECRET") != "" {
 		err := godotenv.Overload(filePath)
 
 		if err != nil {
@@ -37,22 +33,20 @@ func InitializeEnv(filePath string) error {
 	}
 
 	if PORT == "" {
-		PORT = "8080"
+		os.Setenv("PORT", "8080")
 	}
 	if GIN_MODE == "" {
-		GIN_MODE = "release"
+		os.Setenv("GIN_MODE", "release")
 	}
 	if GITHUB_WEBHOOK_SECRET == "" {
-		GITHUB_WEBHOOK_SECRET = "empty"
+		os.Setenv("GITHUB_WEBHOOK_SECRET", "empty")
 	}
 
-	LOG_LEVEL_INT, err := strconv.Atoi(LOG_LEVEL)
+	_, err := strconv.Atoi(LOG_LEVEL)
 
 	if err != nil {
 		return err
 	}
-
-	Env = EnvType{GITHUB_WEBHOOK_SECRET: GITHUB_WEBHOOK_SECRET, GIN_MODE: GIN_MODE, LOG_LEVEL: LOG_LEVEL_INT, PORT: PORT}
 
 	return nil
 }

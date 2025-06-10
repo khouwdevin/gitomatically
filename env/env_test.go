@@ -43,10 +43,10 @@ PORT=3000
 	err = InitializeEnv(filePath)
 
 	assert.NoError(t, err, "InitializeEnv should not return an error")
-	assert.Equal(t, "supersecret", Env.GITHUB_WEBHOOK_SECRET, "GITHUB_WEBHOOK_SECRET should be set")
-	assert.Equal(t, "release", Env.GIN_MODE, "GIN_MODE should be set")
-	assert.Equal(t, 0, Env.LOG_LEVEL, "LOG_LEVEL should be parsed correctly")
-	assert.Equal(t, "3000", Env.PORT, "PORT should be set correctly")
+	assert.Equal(t, "supersecret", os.Getenv("GITHUB_WEBHOOK_SECRET"), "GITHUB_WEBHOOK_SECRET should be set")
+	assert.Equal(t, "release", os.Getenv("GIN_MODE"), "GIN_MODE should be set")
+	assert.Equal(t, "0", os.Getenv("LOG_LEVEL"), "LOG_LEVEL should be parsed correctly")
+	assert.Equal(t, "3000", os.Getenv("PORT"), "PORT should be set correctly")
 }
 
 func TestInitializeEnvDefaultPort(t *testing.T) {
@@ -69,7 +69,7 @@ func TestInitializeEnvDefaultPort(t *testing.T) {
 	err = InitializeEnv(filePath)
 
 	assert.NoError(t, err, "InitializeEnv should not return an error with default port")
-	assert.Equal(t, "8080", Env.PORT, "PORT should default to 8080")
+	assert.Equal(t, "8080", os.Getenv("PORT"), "PORT should default to 8080")
 }
 
 func TestInitializeEnvMissingRequiredVars(t *testing.T) {
@@ -148,5 +148,5 @@ func TestInitializeEnvGodotenvOverload(t *testing.T) {
 	err = InitializeEnv(filePath)
 
 	assert.NoError(t, err)
-	assert.Equal(t, -4, Env.LOG_LEVEL, "LOG_LEVEL should be overloaded")
+	assert.Equal(t, "-4", os.Getenv("LOG_LEVEL"), "LOG_LEVEL should be overloaded")
 }
