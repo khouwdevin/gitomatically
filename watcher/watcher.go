@@ -21,6 +21,13 @@ func NewWatcher(filePath string, wg *sync.WaitGroup, quit chan os.Signal) (*Watc
 		return nil, errors.New(fmt.Sprintf("Watcher error %v", err))
 	}
 
+	_, err = os.Stat(filePath)
+
+	if os.IsNotExist(err) {
+		watcher.Close()
+		return nil, err
+	}
+
 	absConfigPath, err := filepath.Abs(filePath)
 
 	if err != nil {
