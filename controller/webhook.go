@@ -16,11 +16,13 @@ import (
 	"github.com/khouwdevin/gitomatically/middleware"
 )
 
+type RepositoryStruct struct {
+	HtmlUrl string `json:"html_url"`
+}
+
 type GithubResponse struct {
-	Repository struct {
-		HtmlUrl string `json:"html_url"`
-	}
-	Ref string
+	Repository RepositoryStruct `json:"repository"`
+	Ref        string           `json:"ref"`
 }
 
 var (
@@ -78,12 +80,10 @@ func ShutdownServer() error {
 }
 
 func WebhookController(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Webhook receive"})
-
 	event := c.GetHeader("X-GitHub-Event")
 
 	if event != "push" {
-		slog.Debug("WEBHOOK Not a push event")
+		slog.Debug("WEBHOOK Not a push event, return not continue the process")
 		return
 	}
 
@@ -92,6 +92,8 @@ func WebhookController(c *gin.Context) {
 	if err := c.BindJSON(&response); err != nil {
 		return
 	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Webhook receive"})
 
 	var currentRepo config.RepositoryConfig
 
@@ -105,12 +107,14 @@ func WebhookController(c *gin.Context) {
 	}
 
 	if reflect.DeepEqual(currentRepo, config.RepositoryConfig{}) {
+		slog.Debug("WEBHOOK Current repo is empty, return not continue the process")
 		return
 	}
 
 	branch := strings.Split(response.Ref, "/")[2]
 
 	if branch != currentRepo.Branch {
+		slog.Debug(fmt.Sprintf("WEBHOOK Not the expected %v branch from response %v branch, skip pull and run commands", currentRepo.Branch, branch))
 		return
 	}
 
@@ -141,8 +145,7 @@ func WebhookController(c *gin.Context) {
 
 		if err != nil {
 			slog.Error(fmt.Sprintf("WEBHOOK Failed to run build command %v", arrCommand))
-			break
+			return
 		}
 	}
-
 }
