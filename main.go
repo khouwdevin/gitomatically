@@ -52,6 +52,12 @@ func main() {
 		return
 	}
 
+	err = config.PreStart()
+
+	if err != nil {
+		slog.Error(fmt.Sprintf("MAIN Prestart error %v", err))
+	}
+
 	if !config.Settings.Preference.Cron && os.Getenv("GITHUB_WEBHOOK_SECRET") == "" {
 		slog.Error("MAIN Github webhook secret is required")
 		return

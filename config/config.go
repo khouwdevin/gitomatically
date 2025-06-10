@@ -36,12 +36,6 @@ func InitializeConfig(filePath string) error {
 		return errors.New("duration value is required.")
 	}
 
-	err = PreStart()
-
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 

@@ -141,3 +141,28 @@ func TestInitializetConfigDurationMissing(t *testing.T) {
 	assert.Error(t, err, "InitializeConfig should return an error")
 	assert.Contains(t, err.Error(), "duration value is required.", "Error message should indicate spec variable is not exist.")
 }
+
+func TestPreStart(t *testing.T) {
+	t.Cleanup(func() {
+		Settings = Config{}
+	})
+
+	Settings = Config{
+		Preference: CronSettings{
+			Cron: true,
+		},
+		Repositories: map[string]RepositoryConfig{
+			"stalker-bot": {
+				Url:      "https://github.com/khouwdevin/gitomatically",
+				Clone:    "git@github.com:khouwdevin/gitomatically.git",
+				Branch:   "master",
+				Path:     t.TempDir(),
+				Commands: []string{},
+			},
+		},
+	}
+
+	err := PreStart()
+
+	assert.NoError(t, err, "Prestart should not return an error")
+}
