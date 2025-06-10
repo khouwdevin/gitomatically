@@ -17,12 +17,17 @@ import (
 
 func main() {
 	var wg sync.WaitGroup
-	wg.Add(2)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	slog.SetLogLoggerLevel(slog.LevelInfo)
+
+	// Initialize env variables
+
+	slog.Info("MAIN Powered by khouwdevin.com")
+
+	slog.Info("MAIN Initialize env")
 
 	err := env.InitializeEnv(".env")
 
@@ -40,9 +45,7 @@ func main() {
 
 	slog.SetLogLoggerLevel(slog.Level(LOG_LEVEL_INT))
 
-	slog.Info("MAIN Powered by khouwdevin.com")
-
-	slog.Info("MAIN Initialize env")
+	// Initialize config
 
 	slog.Info("MAIN Initialize config")
 	err = config.InitializeConfig("config.yaml")
@@ -63,22 +66,26 @@ func main() {
 		return
 	}
 
-	configStopChan := make(chan struct{})
-	envStopChan := make(chan struct{})
+	// Initialize watcher
 
-	err = watcher.ConfigWatcher("config.yaml", configStopChan, &wg, quit)
+	configWatcher, err := watcher.NewWatcher("config.yaml", &wg, quit)
+
+	if err != nil {
+		slog.Error(fmt.Sprintf("MAIN %v", err))
+		return
+	}
+
+	envWatcher, err := watcher.NewWatcher(".env", &wg, quit)
 
 	if err != nil {
 		slog.Error(fmt.Sprintf("MAIN %v", err))
 		return
 	}
 
-	err = watcher.EnvWatcher(".env", envStopChan, &wg, quit)
+	envWatcher.Run(watcher.EnvDebouncedEvents)
+	configWatcher.Run(watcher.ConfigDebouncedEvents)
 
-	if err != nil {
-		slog.Error(fmt.Sprintf("MAIN %v", err))
-		return
-	}
+	// Start server or cron
 
 	if config.Settings.Preference.Cron {
 		err := controller.NewCron()
@@ -98,6 +105,8 @@ func main() {
 
 	<-quit
 
+	// Quit application
+
 	if config.Settings.Preference.Cron {
 		err = controller.StopCron()
 
@@ -112,10 +121,12 @@ func main() {
 		}
 	}
 
-	close(configStopChan)
-	close(envStopChan)
+	configWatcher.Stop()
+	envWatcher.Stop()
 
 	slog.Debug("MAIN Closing watcher for config and env channel")
 
 	wg.Wait()
+
+	slog.Debug("MAIN Main exited")
 }
