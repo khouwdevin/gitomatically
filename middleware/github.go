@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -20,7 +21,7 @@ func GithubAuthorization() gin.HandlerFunc {
 		if signatureHeader == "" {
 			slog.Debug("MIDDLEWARE Signature is not found")
 
-			c.JSON(http.StatusUnauthorized, gin.H{"Message": "X-Hub-Signature-256 is not found!"})
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "X-Hub-Signature-256 is not found!"})
 			c.Abort()
 
 			return
@@ -30,7 +31,12 @@ func GithubAuthorization() gin.HandlerFunc {
 
 		bodyBytes, err := io.ReadAll(c.Request.Body)
 		if err != nil {
+			slog.Error(fmt.Sprintf("MIDDLEWARE Error reading body %v", err))
+
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal server error"})
+			c.Abort()
+
+			return
 		}
 
 		c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -43,7 +49,7 @@ func GithubAuthorization() gin.HandlerFunc {
 		if !hmac.Equal([]byte(computedSignature), []byte(expectedSignature)) {
 			slog.Debug("MIDDLEWARE Signature is not match")
 
-			c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized!"})
 			c.Abort()
 
 			return
