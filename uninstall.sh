@@ -20,11 +20,10 @@ sudo systemctl daemon-reload
 sudo rm $(pwd)/"$CONFIG_FILE_NAME"
 sudo rm $(pwd)/"$ENV_FILE_NAME"
 sudo cp "$APP_DIR"/"$CONFIG_FILE_NAME" $(pwd)/"$CONFIG_FILE_NAME"
-sudo cp "$APP_DIR"/"$ENV_FILE_NAME" $(pwd)/"$ENV_FILE_NAME" 
+sudo cp "$APP_DIR"/"$ENV_FILE_NAME" $(pwd)/"$ENV_FILE_NAME"
 
 # --- Remove files ---
 sudo rm -rf "$APP_DIR"
-sudo rm /usr/local/bin/"$APP_BINARY"
 sudo rm /etc/systemd/system/"$SERVICE_NAME"
 echo "Directory '$APP_DIR' and '$SERVICE_NAME' is deleted"
 echo "Uninstall gitomatically success."
