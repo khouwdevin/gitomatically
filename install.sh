@@ -17,13 +17,18 @@ echo "Directory '$APP_DIR' created and permissions set."
 go build -o ./gitomatically ./main.go
 
 # --- Copy files ---
-sudo cp ./"$APP_BINARY" "$APP_DIR"/"$APP_BINARY"
-sudo ln -s $(pwd)/"$CONFIG_FILE_NAME" "$APP_DIR"/"$CONFIG_FILE_NAME"
-sudo ln -s $(pwd)/"$ENV_FILE_NAME" "$APP_DIR"/"$ENV_FILE_NAME"
+sudo cp $(pwd)/"$APP_BINARY" "$APP_DIR"/"$APP_BINARY"
+sudo cp $(pwd)/"$CONFIG_FILE_NAME" "$APP_DIR"/"$CONFIG_FILE_NAME"
+sudo cp $(pwd)/"$ENV_FILE_NAME" "$APP_DIR"/"$ENV_FILE_NAME"
+
+sudo ln -s "$APP_DIR"/"$CONFIG_FILE_NAME" $(pwd)/"$CONFIG_FILE_NAME" 
+sudo ln -s "$APP_DIR"/"$ENV_FILE_NAME" $(pwd)/"$ENV_FILE_NAME" 
 
 # --- Change files owner ---
 sudo chmod +x "$APP_DIR"/"$APP_BINARY"
 sudo chown -R "$APP_USER":"$APP_GROUP" "$APP_DIR"
+sudo chown "$APP_USER":"$APP_GROUP" $(pwd)/"$CONFIG_FILE_NAME" 
+sudo chown "$APP_USER":"$APP_GROUP" $(pwd)/"$ENV_FILE_NAME"
 
 sudo bash -c "cat > /etc/systemd/system/$SERVICE_NAME << EOF
 [Unit]
