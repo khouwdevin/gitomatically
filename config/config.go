@@ -41,53 +41,53 @@ func InitializeConfig(filePath string) error {
 
 func PreStart() error {
 	for _, repository := range Settings.Repositories {
-		_, err := os.Stat(repository.Path)
+		_, err := os.Stat(filepath.Join(repository.Path, ".git"))
 
 		repoName := filepath.Base(repository.Path)
 
 		if err == nil {
-			_, err := os.Stat(filepath.Join(repository.Path, ".git"))
+			slog.Debug(fmt.Sprintf("CONFIG Pulling %v", repository.Url))
 
-			if err == nil {
-				continue
-			} else if os.IsNotExist(err) {
-				slog.Info(fmt.Sprintf("CONFIG Cloning %v", repository.Url))
-				err = os.RemoveAll(repository.Path)
+			git := exec.Command("git", "pull")
+			git.Dir = repository.Path
+			git.Env = os.Environ()
 
-				if err != nil {
-					return err
-				}
+			stdout, err := git.Output()
+			output := strings.TrimSpace(string(stdout))
 
-				git := exec.Command("git", "clone", repository.Clone, repoName)
-				git.Dir = filepath.Dir(repository.Path)
-				git.Env = os.Environ()
-
-				_, err := git.Output()
-
-				if err != nil {
-					return err
-				}
-
-				for _, command := range repository.Commands {
-					slog.Debug(fmt.Sprintf("CONFIG Running %v", command))
-
-					arrCommand := strings.Split(command, " ")
-
-					cmd := exec.Command(arrCommand[0], arrCommand[1:]...)
-					cmd.Dir = repository.Path
-					cmd.Env = os.Environ()
-
-					_, err := cmd.Output()
-
-					if err != nil {
-						return errors.New("failed to run command")
-					}
-				}
-			} else {
+			if err != nil {
+				slog.Debug(fmt.Sprintf("CONFIG Git clone err output %v", string(output)))
 				return err
 			}
+
+			if strings.Contains(output, "Already up to date.") {
+				slog.Debug(fmt.Sprintf("CRON %v is up to date, continue to next repository", repository.Url))
+				continue
+			}
+
+			for _, command := range repository.Commands {
+				slog.Debug(fmt.Sprintf("CRON Running %v", command))
+
+				arrCommand := strings.Split(command, " ")
+
+				cmd := exec.Command(arrCommand[0], arrCommand[1:]...)
+				cmd.Dir = repository.Path
+				cmd.Env = os.Environ()
+
+				_, err := cmd.Output()
+
+				if err != nil {
+					slog.Error("CRON Failed to run command")
+					break
+				}
+			}
 		} else if os.IsNotExist(err) {
-			slog.Info(fmt.Sprintf("CONFIG Adding %v", repository.Url))
+			slog.Info(fmt.Sprintf("CONFIG Cloning %v", repository.Url))
+			err = os.RemoveAll(repository.Path)
+
+			if err != nil {
+				return err
+			}
 
 			dir := filepath.Dir(repository.Path)
 			dirPerms := os.FileMode(0755)
@@ -101,10 +101,10 @@ func PreStart() error {
 			git.Dir = dir
 			git.Env = os.Environ()
 
-			_, err = git.Output()
+			output, err := git.Output()
 
 			if err != nil {
-				defer os.RemoveAll(repository.Path)
+				slog.Debug(fmt.Sprintf("CONFIG Git clone err output %v", string(output)))
 				return err
 			}
 
@@ -117,9 +117,10 @@ func PreStart() error {
 				cmd.Dir = repository.Path
 				cmd.Env = os.Environ()
 
-				_, err := cmd.Output()
+				output, err := cmd.Output()
 
 				if err != nil {
+					slog.Debug(fmt.Sprintf("CONFIG Command err output %v", string(output)))
 					return errors.New("failed to run command")
 				}
 			}
