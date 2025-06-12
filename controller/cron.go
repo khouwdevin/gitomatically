@@ -42,28 +42,13 @@ func NewCron() error {
 }
 
 func ChangeCron() error {
-	cronMutex.Lock()
-	defer cronMutex.Unlock()
-
 	if Ccron == nil {
 		NewCron()
 		return nil
 	}
 
-	Ccron.Stop()
-	slog.Debug("CRON Stopping current existing cron")
-
-	Ccron = cron.New()
-
-	err := Ccron.AddFunc(config.Settings.Preference.Spec, CronController)
-
-	if err != nil {
-		return err
-	}
-
-	Ccron.Start()
-
-	slog.Info("CRON Cron jobs restarted")
+	StopCron()
+	NewCron()
 
 	return nil
 }
@@ -86,6 +71,12 @@ func StopCron() error {
 }
 
 func CronController() {
+	if GetSettingStatus() {
+		return
+	}
+
+	ControllerGroup.Add(1)
+
 	slog.Debug("CRON Rerun all config")
 
 	for _, repository := range config.Settings.Repositories {
@@ -104,7 +95,7 @@ func CronController() {
 		}
 
 		if strings.Contains(output, "Already up to date.") {
-			slog.Debug("CRON Git is up to date, continue to next repository")
+			slog.Debug(fmt.Sprintf("CRON %v is up to date, continue to next repository", repository.Url))
 			continue
 		}
 
@@ -127,4 +118,6 @@ func CronController() {
 	}
 
 	slog.Debug("CRON Cron finished")
+
+	ControllerGroup.Done()
 }

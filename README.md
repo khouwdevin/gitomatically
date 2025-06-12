@@ -114,6 +114,9 @@ sudo certbot --nginx
 
 ## Run app
 
+> [!WARNING]  
+> If the folder specified in path is not an existing Git repository, Gitomatically will delete the folder to be able to clone the repository. Ensure you back up any critical data in those folders if they are not Git repositories.
+
 To run Gitomatically, you can use the provided `install.sh` script. You can also uninstall it using `uninstall.sh`.
 
 ## Notes

@@ -13,6 +13,10 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+var (
+	watcherMutex sync.RWMutex
+)
+
 func NewWatcher(filePath string, wg *sync.WaitGroup, quit chan os.Signal) (*Watcher, error) {
 	watcher, err := fsnotify.NewWatcher()
 
