@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -26,13 +27,17 @@ type GithubResponse struct {
 }
 
 var (
-	Server *http.Server
+	Server       *http.Server
+	serverMutext sync.RWMutex
 )
 
 func NewServer() error {
 	if Server != nil {
 		ShutdownServer()
 	}
+
+	serverMutext.Lock()
+	defer serverMutext.Unlock()
 
 	router := gin.Default()
 
@@ -59,6 +64,9 @@ func NewServer() error {
 }
 
 func ShutdownServer() error {
+	serverMutext.Lock()
+	defer serverMutext.Unlock()
+
 	if Server == nil {
 		return nil
 	}
@@ -80,6 +88,12 @@ func ShutdownServer() error {
 }
 
 func WebhookController(c *gin.Context) {
+	if GetSettingStatus() {
+		return
+	}
+
+	ControllerGroup.Add(1)
+
 	event := c.GetHeader("X-GitHub-Event")
 
 	if event != "push" {
@@ -126,8 +140,8 @@ func WebhookController(c *gin.Context) {
 	output := strings.TrimSpace(string(stdout))
 
 	if err != nil {
+		slog.Debug(fmt.Sprintf("WEBHOOK Git output %v", output))
 		slog.Error(fmt.Sprintf("WEBHOOK Failed to pull branch %v", err))
-		slog.Error(fmt.Sprintf("WEBHOOK Git output %v", output))
 
 		return
 	}
@@ -141,11 +155,14 @@ func WebhookController(c *gin.Context) {
 		cmd.Dir = currentRepo.Path
 		cmd.Env = os.Environ()
 
-		_, err := cmd.Output()
+		output, err := cmd.Output()
 
 		if err != nil {
+			slog.Debug(fmt.Sprintf("WEBHOOK Command err output %v", string(output)))
 			slog.Error(fmt.Sprintf("WEBHOOK Failed to run build command %v", arrCommand))
 			return
 		}
 	}
+
+	ControllerGroup.Done()
 }
