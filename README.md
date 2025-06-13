@@ -12,7 +12,7 @@ To configure Gitomatically for your desired repositories, create a `config.yaml`
 
 ```yaml
 preference:
-  private_key: ~/.ssh/ssh_key { path to your ssh private key }
+  private_key: /home/gitomatically/.ssh/id_ed25519 { path to your ssh private key }
   paraphrase: "helloworld" { add paraphrase if you use one }
   cron: true { true | false, if false it will use webhook }
   spec: '*/30 * * * * *' { rerun every 30 seconds }
@@ -31,7 +31,7 @@ repositories:
     url: https://github.com/example/example.com
     clone: git@github.com:example/example.com.git
     branch: main
-    path: /home/khouwdevin/apps/example.com
+    path: /home/gitomatically/apps/example.com
     commands:
       - docker compose up --build -d
 ```
