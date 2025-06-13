@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/khouwdevin/gitomatically/config"
 	"github.com/robfig/cron"
 )
@@ -80,23 +82,29 @@ func CronController() {
 	slog.Debug("CRON Rerun all config")
 
 	for _, repository := range config.Settings.Repositories {
-		git := exec.Command("git", "pull")
-		git.Dir = repository.Path
-		git.Env = os.Environ()
-
-		stdout, err := git.Output()
-		output := strings.TrimSpace(string(stdout))
+		publicKeys, err := ssh.NewPublicKeysFromFile("git", config.Settings.Preference.PrivateKey, config.Settings.Preference.Paraphrase)
 
 		if err != nil {
-			slog.Error(fmt.Sprintf("CRON Git pull error %v", err))
-			slog.Error(fmt.Sprintf("CRON Git output %v", output))
-
-			continue
+			slog.Error(fmt.Sprintf("CRON New public keys from file error %v", err))
 		}
 
-		if strings.Contains(output, "Already up to date.") {
-			slog.Debug(fmt.Sprintf("CRON %v is up to date, continue to next repository", repository.Url))
-			continue
+		r, err := git.PlainOpen(repository.Path)
+
+		w, err := r.Worktree()
+
+		if err != nil {
+			slog.Error(fmt.Sprintf("CRON Get work tree error %v", err))
+		}
+
+		err = w.Pull(&git.PullOptions{RemoteName: "origin", Auth: publicKeys, Progress: os.Stdout})
+
+		if err != nil {
+			if err == git.NoErrAlreadyUpToDate {
+				slog.Debug(fmt.Sprintf("CRON %v is up to date, continue to next repository", repository.Url))
+				continue
+			} else {
+				slog.Debug(fmt.Sprintf("CRON Git pull err output %v", err))
+			}
 		}
 
 		for _, command := range repository.Commands {

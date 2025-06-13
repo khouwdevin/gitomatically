@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/khouwdevin/gitomatically/config"
 	"github.com/khouwdevin/gitomatically/middleware"
 )
@@ -132,18 +134,30 @@ func WebhookController(c *gin.Context) {
 		return
 	}
 
-	git := exec.Command("git", "pull")
-	git.Dir = currentRepo.Path
-	git.Env = os.Environ()
-
-	stdout, err := git.Output()
-	output := strings.TrimSpace(string(stdout))
+	publicKeys, err := ssh.NewPublicKeysFromFile("git", config.Settings.Preference.PrivateKey, config.Settings.Preference.Paraphrase)
 
 	if err != nil {
-		slog.Debug(fmt.Sprintf("WEBHOOK Git output %v", output))
-		slog.Error(fmt.Sprintf("WEBHOOK Failed to pull branch %v", err))
+		slog.Error(fmt.Sprintf("WEBHOOK New public keys from file error %v", err))
+	}
 
-		return
+	r, err := git.PlainOpen(currentRepo.Path)
+
+	w, err := r.Worktree()
+
+	if err != nil {
+		slog.Error(fmt.Sprintf("WEBHOOK Get work tree error %v", err))
+	}
+
+	err = w.Pull(&git.PullOptions{RemoteName: "origin", Auth: publicKeys, Progress: os.Stdout})
+
+	if err != nil {
+		if err == git.NoErrAlreadyUpToDate {
+			slog.Debug(fmt.Sprintf("WEBHOOK %v is up to date", currentRepo.Url))
+			return
+		} else {
+			slog.Error(fmt.Sprintf("WEBHOOK Failed to pull branch %v", err))
+			return
+		}
 	}
 
 	for _, command := range currentRepo.Commands {

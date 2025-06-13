@@ -1,8 +1,10 @@
 package config
 
-type CronSettings struct {
-	Cron bool   `yaml:"cron"`
-	Spec string `yaml:"spec"`
+type PreferenceSettings struct {
+	PrivateKey string `yaml:"private_key"`
+	Paraphrase string `yaml:"paraphrase"`
+	Cron       bool   `yaml:"cron"`
+	Spec       string `yaml:"spec"`
 }
 
 type RepositoryConfig struct {
@@ -14,6 +16,6 @@ type RepositoryConfig struct {
 }
 
 type Config struct {
-	Preference   CronSettings                `yaml:"preference"`
+	Preference   PreferenceSettings          `yaml:"preference"`
 	Repositories map[string]RepositoryConfig `yaml:"repositories"`
 }

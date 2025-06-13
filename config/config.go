@@ -10,6 +10,9 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
+
+	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 )
 
 var (
@@ -29,6 +32,9 @@ func InitializeConfig(filePath string) error {
 		return err
 	}
 
+	if Settings.Preference.PrivateKey == "" {
+		return errors.New("private key is not found.")
+	}
 	if len(Settings.Repositories) == 0 {
 		return errors.New("there is no repository in config.")
 	}
@@ -43,30 +49,37 @@ func PreStart() error {
 	for _, repository := range Settings.Repositories {
 		_, err := os.Stat(filepath.Join(repository.Path, ".git"))
 
-		repoName := filepath.Base(repository.Path)
-
 		if err == nil {
 			slog.Debug(fmt.Sprintf("CONFIG Pulling %v", repository.Url))
 
-			git := exec.Command("git", "pull")
-			git.Dir = repository.Path
-			git.Env = os.Environ()
-
-			stdout, err := git.Output()
-			output := strings.TrimSpace(string(stdout))
+			publicKeys, err := ssh.NewPublicKeysFromFile("git", Settings.Preference.PrivateKey, Settings.Preference.Paraphrase)
 
 			if err != nil {
-				slog.Debug(fmt.Sprintf("CONFIG Git clone err output %v", string(output)))
 				return err
 			}
 
-			if strings.Contains(output, "Already up to date.") {
-				slog.Debug(fmt.Sprintf("CRON %v is up to date, continue to next repository", repository.Url))
-				continue
+			r, err := git.PlainOpen(repository.Path)
+
+			w, err := r.Worktree()
+
+			if err != nil {
+				return err
+			}
+
+			err = w.Pull(&git.PullOptions{RemoteName: "origin", Auth: publicKeys, Progress: os.Stdout})
+
+			if err != nil {
+				if err == git.NoErrAlreadyUpToDate {
+					slog.Debug(fmt.Sprintf("CONFIG %v is up to date, continue to next repository", repository.Url))
+					continue
+				} else {
+					slog.Debug(fmt.Sprintf("CONFIG Git clone err output %v", err))
+					return err
+				}
 			}
 
 			for _, command := range repository.Commands {
-				slog.Debug(fmt.Sprintf("CRON Running %v", command))
+				slog.Debug(fmt.Sprintf("CONFIG Running %v", command))
 
 				arrCommand := strings.Split(command, " ")
 
@@ -77,7 +90,7 @@ func PreStart() error {
 				_, err := cmd.Output()
 
 				if err != nil {
-					slog.Error("CRON Failed to run command")
+					slog.Error("CONFIG Failed to run command")
 					break
 				}
 			}
@@ -97,14 +110,18 @@ func PreStart() error {
 				return err
 			}
 
-			git := exec.Command("git", "clone", repository.Clone, repoName)
-			git.Dir = dir
-			git.Env = os.Environ()
-
-			output, err := git.Output()
+			publicKeys, err := ssh.NewPublicKeysFromFile("git", Settings.Preference.PrivateKey, Settings.Preference.Paraphrase)
 
 			if err != nil {
-				slog.Debug(fmt.Sprintf("CONFIG Git clone err output %v", string(output)))
+				return err
+			}
+
+			_, err = git.PlainClone(repository.Path, false, &git.CloneOptions{
+				Auth: publicKeys,
+				URL:  repository.Clone,
+			})
+
+			if err != nil {
 				return err
 			}
 

@@ -9,7 +9,7 @@ import (
 
 func defaultConfig(dirPath string) config.Config {
 	return config.Config{
-		Preference: config.CronSettings{
+		Preference: config.PreferenceSettings{
 			Cron: false,
 			Spec: "*/30 * * * * *",
 		},

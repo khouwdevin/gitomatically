@@ -12,6 +12,8 @@ To configure Gitomatically for your desired repositories, create a `config.yaml`
 
 ```yaml
 preference:
+  private_key: ~/.ssh/ssh_key { path to your ssh private key }
+  paraphrase: "helloworld" { add paraphrase if you use one }
   cron: true { true | false, if false it will use webhook }
   spec: '*/30 * * * * *' { rerun every 30 seconds }
 repositories:
@@ -41,18 +43,6 @@ GIN_MODE=release
 GITHUB_WEBHOOK_SECRET="helloworld" # you can create a secret when you register the webhook
 LOG_LEVEL=0 # 0 = Info | -4 = Debug | 4 = Warn | 8 = Error
 PORT=8080 # the default is 8080
-```
-
-For Gitomatically to securely clone private repositories using SSH, you need to configure your SSH client. This setup allows your server to authenticate with GitHub using an SSH key.
-
-Create or edit your SSH configuration file, typically located at `~/.ssh/config`
-
-```txt
-Host github.com
-  HostName github.com
-  User git
-  IdentityFile ~/.ssh/{your_ssh_private_key_file} # e.g., ~/.ssh/id_rsa or ~/.ssh/gitomatically_ssh_key
-  IdentitiesOnly yes
 ```
 
 ### (Optional) Enabling SSL with Certbot (Using Nginx Reverse Proxy)
