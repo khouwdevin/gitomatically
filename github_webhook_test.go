@@ -1,4 +1,4 @@
-package middleware
+package main
 
 import (
 	"bytes"
@@ -37,7 +37,7 @@ func initializeServer(t *testing.T) *http.Server {
 	return server
 }
 
-func sendRequest(t *testing.T, payload map[string]any, githubWebhookSecret string, skipHeader bool) (*http.Response, map[string]any) {
+func sendGithubRequest(t *testing.T, payload map[string]any, githubWebhookSecret string, skipHeader bool) (*http.Response, map[string]any) {
 	client := &http.Client{}
 
 	jsonPayload, err := json.Marshal(payload)
@@ -96,7 +96,7 @@ func TestGithubMiddlewareSuccess(t *testing.T) {
 	Server := initializeServer(t)
 	defer Server.Shutdown(t.Context())
 
-	_, jsonResponse := sendRequest(t, map[string]any{"message": "webhook testing"}, "helloworld", false)
+	_, jsonResponse := sendGithubRequest(t, map[string]any{"message": "webhook testing"}, "helloworld", false)
 	message := jsonResponse["message"].(string)
 
 	assert.Equal(t, "Webhook receive", message, "API response message should return Webhook receive")
@@ -112,7 +112,7 @@ func TestGithubMiddlwareUnauthorized(t *testing.T) {
 	Server := initializeServer(t)
 	defer Server.Shutdown(t.Context())
 
-	res, jsonResponse := sendRequest(t, map[string]any{"message": "webhook testing"}, "worldhello", false)
+	res, jsonResponse := sendGithubRequest(t, map[string]any{"message": "webhook testing"}, "worldhello", false)
 	message := jsonResponse["message"].(string)
 
 	assert.Equal(t, "Unauthorized!", message, "API response message should return unauthorized")
@@ -129,7 +129,7 @@ func TestGithubMiddlwareSecretNotFound(t *testing.T) {
 	Server := initializeServer(t)
 	defer Server.Shutdown(t.Context())
 
-	res, jsonResponse := sendRequest(t, map[string]any{"message": "webhook testing"}, "worldhello", true)
+	res, jsonResponse := sendGithubRequest(t, map[string]any{"message": "webhook testing"}, "worldhello", true)
 	message := jsonResponse["message"].(string)
 
 	assert.Equal(t, "X-Hub-Signature-256 is not found!", message, "API response message should return X-Hub-Signature-256 is not found!")

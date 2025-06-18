@@ -1,4 +1,4 @@
-package controller
+package main
 
 import (
 	"context"
@@ -9,14 +9,12 @@ import (
 	"os/exec"
 	"reflect"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
-	"github.com/khouwdevin/gitomatically/config"
-	"github.com/khouwdevin/gitomatically/middleware"
+	"github.com/khouwdevin/gitomatically/watcher"
 )
 
 type RepositoryStruct struct {
@@ -29,8 +27,7 @@ type GithubResponse struct {
 }
 
 var (
-	Server       *http.Server
-	serverMutext sync.RWMutex
+	Server *http.Server
 )
 
 func NewServer() error {
@@ -38,16 +35,13 @@ func NewServer() error {
 		ShutdownServer()
 	}
 
-	serverMutext.Lock()
-	defer serverMutext.Unlock()
-
 	router := gin.Default()
 
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Welcome to gitomatically!"})
 	})
 
-	router.POST("/webhook", middleware.GithubAuthorization(), WebhookController)
+	router.POST("/webhook", GithubAuthorization(), WebhookController)
 
 	slog.Info("MAIN Gin running")
 
@@ -66,9 +60,6 @@ func NewServer() error {
 }
 
 func ShutdownServer() error {
-	serverMutext.Lock()
-	defer serverMutext.Unlock()
-
 	if Server == nil {
 		return nil
 	}
@@ -90,11 +81,11 @@ func ShutdownServer() error {
 }
 
 func WebhookController(c *gin.Context) {
-	if GetSettingStatus() {
+	if watcher.GetSettingStatus() {
 		return
 	}
 
-	ControllerGroup.Add(1)
+	watcher.ControllerGroup.Add(1)
 
 	event := c.GetHeader("X-GitHub-Event")
 
@@ -111,18 +102,18 @@ func WebhookController(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Webhook receive"})
 
-	var currentRepo config.RepositoryConfig
+	var currentRepo RepositoryConfig
 
 	htmlUrl := response.Repository.HtmlUrl
 
-	for _, repository := range config.Settings.Repositories {
+	for _, repository := range Settings.Repositories {
 		if repository.Url == htmlUrl {
 			currentRepo = repository
 			break
 		}
 	}
 
-	if reflect.DeepEqual(currentRepo, config.RepositoryConfig{}) {
+	if reflect.DeepEqual(currentRepo, RepositoryConfig{}) {
 		slog.Debug("WEBHOOK Current repo is empty, return not continue the process")
 		return
 	}
@@ -134,7 +125,7 @@ func WebhookController(c *gin.Context) {
 		return
 	}
 
-	publicKeys, err := ssh.NewPublicKeysFromFile("git", config.Settings.Preference.PrivateKey, config.Settings.Preference.Paraphrase)
+	publicKeys, err := ssh.NewPublicKeysFromFile("git", Settings.Preference.PrivateKey, Settings.Preference.Paraphrase)
 
 	if err != nil {
 		slog.Error(fmt.Sprintf("WEBHOOK New public keys from file error %v", err))
@@ -178,5 +169,5 @@ func WebhookController(c *gin.Context) {
 		}
 	}
 
-	ControllerGroup.Done()
+	watcher.ControllerGroup.Done()
 }

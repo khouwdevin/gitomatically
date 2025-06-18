@@ -1,4 +1,4 @@
-package config
+package main
 
 import (
 	"os"
@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func createTempFile(filePath string, fileContent Config) error {
+func createTempYAMLFile(filePath string, fileContent Config) error {
 	yamlBytes, err := yaml.Marshal(fileContent)
 
 	if err != nil {
@@ -65,7 +65,7 @@ func TestInitializeConfigSuccess(t *testing.T) {
 	}
 	filePath := filepath.Join(t.TempDir(), "config.yaml")
 
-	err = createTempFile(filePath, fileContent)
+	err = createTempYAMLFile(filePath, fileContent)
 
 	if err != nil {
 		t.Error("Cannot write temporary config file")
@@ -104,7 +104,7 @@ func TestInitializeDefaultConfig(t *testing.T) {
 
 	filePath := filepath.Join(t.TempDir(), "config.yaml")
 
-	err = createTempFile(filePath, fileContent)
+	err = createTempYAMLFile(filePath, fileContent)
 
 	if err != nil {
 		t.Error("Cannot write temporary config file")
@@ -135,7 +135,7 @@ func TestInitializeConfigRepositoryError(t *testing.T) {
 
 	filePath := filepath.Join(t.TempDir(), "config.yaml")
 
-	err = createTempFile(filePath, fileContent)
+	err = createTempYAMLFile(filePath, fileContent)
 
 	if err != nil {
 		t.Error("Cannot write temporary config file")
@@ -166,7 +166,7 @@ func TestInitializetConfigPrivateKeyMissing(t *testing.T) {
 
 	filePath := filepath.Join(t.TempDir(), "config.yaml")
 
-	err := createTempFile(filePath, fileContent)
+	err := createTempYAMLFile(filePath, fileContent)
 
 	if err != nil {
 		t.Error("Cannot write temporary config file")
@@ -206,7 +206,7 @@ func TestInitializetConfigDurationMissing(t *testing.T) {
 	}
 	filePath := filepath.Join(t.TempDir(), "config.yaml")
 
-	err = createTempFile(filePath, fileContent)
+	err = createTempYAMLFile(filePath, fileContent)
 
 	if err != nil {
 		t.Error("Cannot write temporary config file")

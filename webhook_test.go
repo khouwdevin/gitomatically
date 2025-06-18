@@ -1,4 +1,4 @@
-package controller
+package main
 
 import (
 	"bytes"
@@ -10,11 +10,12 @@ import (
 	"io"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func sendRequest(t *testing.T, payload GithubResponse, headers map[string]string) (*http.Response, map[string]any) {
+func sendWebhookRequest(t *testing.T, payload GithubResponse, headers map[string]string) (*http.Response, map[string]any) {
 	client := &http.Client{}
 
 	jsonPayload, err := json.Marshal(payload)
@@ -75,7 +76,6 @@ func TestCreateNewServer(t *testing.T) {
 }
 
 func TestShutdownServer(t *testing.T) {
-	t.Skip("Error when shutting down server for no reason")
 	t.Setenv("PORT", "8080")
 
 	err := NewServer()
@@ -83,6 +83,8 @@ func TestShutdownServer(t *testing.T) {
 	if err != nil {
 		t.Errorf("Creating server error %v", err)
 	}
+
+	time.Sleep(1 * time.Second)
 
 	err = ShutdownServer()
 
@@ -111,7 +113,7 @@ func TestWebhookSuccess(t *testing.T) {
 		"X-Github-Event": "push",
 	}
 
-	res, jsonResponse := sendRequest(t, githubResponse, headers)
+	res, jsonResponse := sendWebhookRequest(t, githubResponse, headers)
 
 	message := jsonResponse["message"].(string)
 

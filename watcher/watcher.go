@@ -13,6 +13,19 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+type Self struct {
+	Path     string
+	Timer    *time.Timer
+	StopChan chan struct{}
+}
+
+type Watcher struct {
+	Watcher *fsnotify.Watcher
+	Quit    chan os.Signal
+	Wg      *sync.WaitGroup
+	Self    Self
+}
+
 var (
 	watcherMutex sync.RWMutex
 )
@@ -47,9 +60,9 @@ func NewWatcher(filePath string, wg *sync.WaitGroup, quit chan os.Signal) (*Watc
 	}
 
 	w := &Watcher{
-		watcher: watcher,
-		quit:    quit,
-		wg:      wg,
+		Watcher: watcher,
+		Quit:    quit,
+		Wg:      wg,
 		Self: Self{
 			Path:     absConfigPath,
 			Timer:    time.AfterFunc(100*time.Millisecond, func() {}),
@@ -62,19 +75,19 @@ func NewWatcher(filePath string, wg *sync.WaitGroup, quit chan os.Signal) (*Watc
 
 func (w *Watcher) Stop() error {
 	close(w.Self.StopChan)
-	return w.watcher.Close()
+	return w.Watcher.Close()
 }
 
 func (w *Watcher) Run(callback func(w *Watcher)) {
-	w.wg.Add(1)
+	w.Wg.Add(1)
 
 	go func() {
 		for {
 			select {
-			case event, ok := <-w.watcher.Events:
+			case event, ok := <-w.Watcher.Events:
 				if !ok {
 					slog.Error("WATCHER Watcher events channel is closed")
-					w.quit <- syscall.SIGTERM
+					w.Quit <- syscall.SIGTERM
 
 					return
 				}
@@ -82,27 +95,27 @@ func (w *Watcher) Run(callback func(w *Watcher)) {
 					go callback(w)
 				} else if event.Op&fsnotify.Remove == fsnotify.Remove || event.Op&fsnotify.Rename == fsnotify.Rename {
 					slog.Error("WATCHER File is removed or renamed")
-					w.quit <- syscall.SIGTERM
+					w.Quit <- syscall.SIGTERM
 
 					return
 				}
 
-			case err, ok := <-w.watcher.Errors:
+			case err, ok := <-w.Watcher.Errors:
 				if !ok {
 					slog.Error("WATCHER Watcher errors channel is closed")
-					w.quit <- syscall.SIGTERM
+					w.Quit <- syscall.SIGTERM
 
 					return
 				}
 				if err != nil {
 					slog.Error(fmt.Sprintf("WATCHER Watcher error %v", err))
-					w.quit <- syscall.SIGTERM
+					w.Quit <- syscall.SIGTERM
 
 					return
 				}
 
 			case <-w.Self.StopChan:
-				w.wg.Done()
+				w.Wg.Done()
 
 				return
 			}

@@ -1,19 +1,18 @@
-package controller
+package main
 
 import (
 	"testing"
 
-	"github.com/khouwdevin/gitomatically/config"
 	"github.com/stretchr/testify/assert"
 )
 
-func defaultConfig(dirPath string) config.Config {
-	return config.Config{
-		Preference: config.PreferenceSettings{
+func defaultConfig(dirPath string) Config {
+	return Config{
+		Preference: PreferenceSettings{
 			Cron: false,
 			Spec: "*/30 * * * * *",
 		},
-		Repositories: map[string]config.RepositoryConfig{
+		Repositories: map[string]RepositoryConfig{
 			"gitomatically": {
 				Url:      "https://github.com/khouwdevin/gitomatically",
 				Clone:    "git@github.com:khouwdevin/gitomatically.git",
@@ -26,7 +25,7 @@ func defaultConfig(dirPath string) config.Config {
 }
 
 func TestCronCreation(t *testing.T) {
-	config.Settings = defaultConfig(t.TempDir())
+	Settings = defaultConfig(t.TempDir())
 
 	err := NewCron()
 
@@ -40,7 +39,7 @@ func TestCronCreation(t *testing.T) {
 }
 
 func TestChangeCron(t *testing.T) {
-	config.Settings = defaultConfig(t.TempDir())
+	Settings = defaultConfig(t.TempDir())
 
 	err := NewCron()
 

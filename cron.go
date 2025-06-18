@@ -1,4 +1,4 @@
-package controller
+package main
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
-	"github.com/khouwdevin/gitomatically/config"
+	"github.com/khouwdevin/gitomatically/watcher"
 	"github.com/robfig/cron"
 )
 
@@ -30,7 +30,7 @@ func NewCron() error {
 
 	Ccron = cron.New()
 
-	err := Ccron.AddFunc(config.Settings.Preference.Spec, CronController)
+	err := Ccron.AddFunc(Settings.Preference.Spec, CronController)
 
 	if err != nil {
 		return err
@@ -73,16 +73,16 @@ func StopCron() error {
 }
 
 func CronController() {
-	if GetSettingStatus() {
+	if watcher.GetSettingStatus() {
 		return
 	}
 
-	ControllerGroup.Add(1)
+	watcher.ControllerGroup.Add(1)
 
 	slog.Debug("CRON Rerun all config")
 
-	for _, repository := range config.Settings.Repositories {
-		publicKeys, err := ssh.NewPublicKeysFromFile("git", config.Settings.Preference.PrivateKey, config.Settings.Preference.Paraphrase)
+	for _, repository := range Settings.Repositories {
+		publicKeys, err := ssh.NewPublicKeysFromFile("git", Settings.Preference.PrivateKey, Settings.Preference.Paraphrase)
 
 		if err != nil {
 			slog.Error(fmt.Sprintf("CRON New public keys from file error %v", err))
@@ -127,5 +127,5 @@ func CronController() {
 
 	slog.Debug("CRON Cron finished")
 
-	ControllerGroup.Done()
+	watcher.ControllerGroup.Done()
 }

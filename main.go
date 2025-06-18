@@ -9,9 +9,6 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/khouwdevin/gitomatically/config"
-	"github.com/khouwdevin/gitomatically/controller"
-	"github.com/khouwdevin/gitomatically/env"
 	"github.com/khouwdevin/gitomatically/watcher"
 )
 
@@ -29,7 +26,7 @@ func main() {
 
 	slog.Info("MAIN Initialize env")
 
-	err := env.InitializeEnv(".env")
+	err := InitializeEnv(".env")
 
 	if err != nil {
 		slog.Error(fmt.Sprintf("MAIN Initialize env error %v", err))
@@ -48,21 +45,21 @@ func main() {
 	// Initialize config
 
 	slog.Info("MAIN Initialize config")
-	err = config.InitializeConfig("config.yaml")
+	err = InitializeConfig("config.yaml")
 
 	if err != nil {
 		slog.Error(fmt.Sprintf("MAIN Initialize config error %v", err))
 		return
 	}
 
-	err = config.PreStart()
+	err = PreStart()
 
 	if err != nil {
 		slog.Error(fmt.Sprintf("MAIN Prestart error %v", err))
 		return
 	}
 
-	if !config.Settings.Preference.Cron && os.Getenv("GITHUB_WEBHOOK_SECRET") == "" {
+	if !Settings.Preference.Cron && os.Getenv("GITHUB_WEBHOOK_SECRET") == "" {
 		slog.Error("MAIN Github webhook secret is required")
 		return
 	}
@@ -83,20 +80,20 @@ func main() {
 		return
 	}
 
-	envWatcher.Run(watcher.EnvDebouncedEvents)
-	configWatcher.Run(watcher.ConfigDebouncedEvents)
+	envWatcher.Run(EnvDebouncedEvents)
+	configWatcher.Run(ConfigDebouncedEvents)
 
 	// Start server or cron
 
-	if config.Settings.Preference.Cron {
-		err := controller.NewCron()
+	if Settings.Preference.Cron {
+		err := NewCron()
 
 		if err != nil {
 			slog.Error(fmt.Sprintf("MAIN Create new cron error %v", err))
 			return
 		}
 	} else {
-		err := controller.NewServer()
+		err := NewServer()
 
 		if err != nil {
 			slog.Error(fmt.Sprintf("MAIN Server error %v", err))
@@ -108,14 +105,14 @@ func main() {
 
 	// Quit application
 
-	if config.Settings.Preference.Cron {
-		err = controller.StopCron()
+	if Settings.Preference.Cron {
+		err = StopCron()
 
 		if err != nil {
 			slog.Error(fmt.Sprintf("MAIN Stopping cron error %v", err))
 		}
 	} else {
-		err = controller.ShutdownServer()
+		err = ShutdownServer()
 
 		if err != nil {
 			slog.Error(fmt.Sprintf("MAIN Shutdown server error %v", err))

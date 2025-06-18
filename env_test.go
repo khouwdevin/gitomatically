@@ -1,4 +1,4 @@
-package env
+package main
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func createTempFile(filePath string, fileContent string) error {
+func createTempEnvFile(filePath string, fileContent string) error {
 	err := os.WriteFile(filePath, []byte(fileContent), 0644)
 
 	if err != nil {
@@ -34,7 +34,7 @@ PORT=3000
 	`
 	filePath := filepath.Join(t.TempDir(), ".env")
 
-	err := createTempFile(filePath, fileContent)
+	err := createTempEnvFile(filePath, fileContent)
 
 	if err != nil {
 		t.Error("Cannot write temporary env file")
@@ -60,7 +60,7 @@ func TestInitializeEnvDefaultPort(t *testing.T) {
 	fileContent := "LOG_LEVEL=0"
 	filePath := filepath.Join(t.TempDir(), ".env")
 
-	err := createTempFile(filePath, fileContent)
+	err := createTempEnvFile(filePath, fileContent)
 
 	if err != nil {
 		t.Error("Cannot write temporary env file")
@@ -83,7 +83,7 @@ func TestInitializeEnvMissingRequiredVars(t *testing.T) {
 	fileContent := ""
 	filePath := filepath.Join(t.TempDir(), ".env")
 
-	err := createTempFile(filePath, fileContent)
+	err := createTempEnvFile(filePath, fileContent)
 
 	if err != nil {
 		t.Error("Cannot write temporary env file")
@@ -106,7 +106,7 @@ func TestInitializeEnvInvalidLogLevel(t *testing.T) {
 	fileContent := "LOG_LEVEL='not-a-number'"
 	filePath := filepath.Join(t.TempDir(), ".env")
 
-	err := createTempFile(filePath, fileContent)
+	err := createTempEnvFile(filePath, fileContent)
 
 	if err != nil {
 		t.Error("Cannot write temporary env file")
@@ -129,7 +129,7 @@ func TestInitializeEnvGodotenvOverload(t *testing.T) {
 	fileContent := "LOG_LEVEL=0"
 	filePath := filepath.Join(t.TempDir(), ".env")
 
-	err := createTempFile(filePath, fileContent)
+	err := createTempEnvFile(filePath, fileContent)
 
 	if err != nil {
 		t.Error("Cannot write temporary env file")
@@ -139,7 +139,7 @@ func TestInitializeEnvGodotenvOverload(t *testing.T) {
 
 	fileContent = "LOG_LEVEL=-4"
 
-	err = createTempFile(filePath, fileContent)
+	err = createTempEnvFile(filePath, fileContent)
 
 	if err != nil {
 		t.Error("Cannot write temporary env file")
