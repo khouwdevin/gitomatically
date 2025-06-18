@@ -1,0 +1,78 @@
+name: Go Release on Tag
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Run Go Tests
+        run: go test ./...
+
+      - name: Build Go App for Linux
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o gitomatically-linux .
+
+      - name: Build Go App for MacOS
+        run: |
+          GOOS=darwin GOARCH=amd64 go build -o gitomatically-macos .
+
+      - name: Build Go App for Windows
+        run: |
+          GOOS=windows GOARCH=amd64 go build -o gitomatically-windows.exe .
+
+      - name: Generate Changelog
+        run: |
+          CURRENT_TAG="${{ github.ref_name }}"
+          PREVIOUS_TAG=$(git tag --sort=-v:refname | sed -n '2p')
+
+          echo "--- Generating Changelog ---"
+          echo "Current Tag: ${CURRENT_TAG}"
+          echo "Previous Tag: ${PREVIOUS_TAG}"
+
+          CHANGELOG_FILE="CHANGELOG.md" # Using .md for better formatting in GitHub Release
+
+          echo "# Changelog" > "${CHANGELOG_FILE}"
+          echo "" >> "${CHANGELOG_FILE}"
+
+          if [ -z "${PREVIOUS_TAG}" ]; then
+            echo "Initial release. Full commit history:" >> "${CHANGELOG_FILE}"
+            git log --pretty=format:"- %s (%h)" "${CURRENT_TAG}" >> "${CHANGELOG_FILE}"
+          else
+            echo "Changes since ${PREVIOUS_TAG}:" >> "${CHANGELOG_FILE}"
+            git log --pretty=format:"- %s (%h)" "${PREVIOUS_TAG}..${CURRENT_TAG}" >> "${CHANGELOG_FILE}"
+          fi
+
+          echo "" >> "${CHANGELOG_FILE}"
+          echo "---------------------------"
+          cat "${CHANGELOG_FILE}" # Print changelog content to action logs
+          echo "Generated changelog saved to ${CHANGELOG_FILE}"
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          body_path: CHANGELOG.md
+          repository: khouwdevin/gitomatically
+          token: ${{ secrets.PAT_GITHUB_SECRET }}
+          files: |
+            gitomatically-windows.exe
+            gitomatically-macos
+            gitomatically-linux
