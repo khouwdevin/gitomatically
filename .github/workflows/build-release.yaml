@@ -43,22 +43,20 @@ jobs:
           echo "Current Tag: ${CURRENT_TAG}"
           echo "Previous Tag: ${PREVIOUS_TAG}"
 
-          CHANGELOG_FILE="CHANGELOG.md" # Using .md for better formatting in GitHub Release
+          CHANGELOG_FILE="CHANGELOG.md"
 
           echo "# Changelog" > "${CHANGELOG_FILE}"
           echo "" >> "${CHANGELOG_FILE}"
 
           if [ -z "${PREVIOUS_TAG}" ]; then
-            echo "Initial release. Full commit history:" >> "${CHANGELOG_FILE}"
             git log --pretty=format:"- %s (%h)" "${CURRENT_TAG}" >> "${CHANGELOG_FILE}"
           else
-            echo "Changes since ${PREVIOUS_TAG}:" >> "${CHANGELOG_FILE}"
             git log --pretty=format:"- %s (%h)" "${PREVIOUS_TAG}..${CURRENT_TAG}" >> "${CHANGELOG_FILE}"
           fi
 
           echo "" >> "${CHANGELOG_FILE}"
           echo "---------------------------"
-          cat "${CHANGELOG_FILE}" # Print changelog content to action logs
+          cat "${CHANGELOG_FILE}"
           echo "Generated changelog saved to ${CHANGELOG_FILE}"
         env:
           GIT_AUTHOR_NAME: github-actions[bot]
