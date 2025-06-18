@@ -71,7 +71,7 @@ jobs:
         with:
           body_path: CHANGELOG.md
           repository: khouwdevin/gitomatically
-          token: ${{ secrets.PAT_GITHUB_SECRET }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           files: |
             gitomatically-windows.exe
             gitomatically-macos
