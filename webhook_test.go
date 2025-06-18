@@ -70,13 +70,15 @@ func TestCreateNewServer(t *testing.T) {
 	t.Setenv("PORT", "8080")
 
 	err := NewServer()
-	defer Server.Shutdown(t.Context())
+
+	time.Sleep(1 * time.Second)
+
+	defer ShutdownServer()
 
 	assert.NoError(t, err, "Create new server should not return an error")
 }
 
 func TestShutdownServer(t *testing.T) {
-	t.Skip("Shutdown still error even after sleep for 1 second")
 	t.Setenv("PORT", "8080")
 
 	err := NewServer()
@@ -102,7 +104,7 @@ func TestWebhookSuccess(t *testing.T) {
 		t.Errorf("Creating server error %v", err)
 	}
 
-	defer Server.Shutdown(t.Context())
+	defer ShutdownServer()
 
 	githubResponse := GithubResponse{
 		Repository: RepositoryStruct{
