@@ -1,4 +1,4 @@
-name: Go Release on Tag
+name: Build and release gitomatically
 on:
   push:
     tags:
