@@ -20,15 +20,15 @@ jobs:
       - name: Run Go Tests
         run: go test ./...
 
-      - name: Build Go App for Linux
+      - name: Build Gitomatically App for Linux
         run: |
           GOOS=linux GOARCH=amd64 go build -o gitomatically-linux .
 
-      - name: Build Go App for MacOS
+      - name: Build Gitomatically App for MacOS
         run: |
           GOOS=darwin GOARCH=amd64 go build -o gitomatically-macos .
 
-      - name: Build Go App for Windows
+      - name: Build Gitomatically App for Windows
         run: |
           GOOS=windows GOARCH=amd64 go build -o gitomatically-windows.exe .
 
