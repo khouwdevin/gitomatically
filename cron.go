@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/khouwdevin/gitomatically/watcher"
 	"github.com/robfig/cron"
 )
@@ -82,21 +81,7 @@ func CronController() {
 	slog.Debug("CRON Rerun all config")
 
 	for _, repository := range Settings.Repositories {
-		publicKeys, err := ssh.NewPublicKeysFromFile("git", Settings.Preference.PrivateKey, Settings.Preference.Paraphrase)
-
-		if err != nil {
-			slog.Error(fmt.Sprintf("CRON New public keys from file error %v", err))
-		}
-
-		r, err := git.PlainOpen(repository.Path)
-
-		w, err := r.Worktree()
-
-		if err != nil {
-			slog.Error(fmt.Sprintf("CRON Get work tree error %v", err))
-		}
-
-		err = w.Pull(&git.PullOptions{RemoteName: "origin", Auth: publicKeys, Progress: os.Stdout})
+		err := GitPull(repository)
 
 		if err != nil {
 			if err == git.NoErrAlreadyUpToDate {

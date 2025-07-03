@@ -12,7 +12,6 @@ import (
 	"gopkg.in/yaml.v3"
 
 	git "github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 )
 
 type PreferenceSettings struct {
@@ -72,21 +71,7 @@ func PreStart() error {
 		if err == nil {
 			slog.Debug(fmt.Sprintf("CONFIG Pulling %v", repository.Url))
 
-			publicKeys, err := ssh.NewPublicKeysFromFile("git", Settings.Preference.PrivateKey, Settings.Preference.Paraphrase)
-
-			if err != nil {
-				return err
-			}
-
-			r, err := git.PlainOpen(repository.Path)
-
-			w, err := r.Worktree()
-
-			if err != nil {
-				return err
-			}
-
-			err = w.Pull(&git.PullOptions{RemoteName: "origin", Auth: publicKeys, Progress: os.Stdout})
+			err := GitPull(repository)
 
 			if err != nil {
 				if err == git.NoErrAlreadyUpToDate {
@@ -116,30 +101,8 @@ func PreStart() error {
 			}
 		} else if os.IsNotExist(err) {
 			slog.Info(fmt.Sprintf("CONFIG Cloning %v", repository.Url))
-			err = os.RemoveAll(repository.Path)
 
-			if err != nil {
-				return err
-			}
-
-			dir := filepath.Dir(repository.Path)
-			dirPerms := os.FileMode(0755)
-			err := os.MkdirAll(dir, dirPerms)
-
-			if err != nil {
-				return err
-			}
-
-			publicKeys, err := ssh.NewPublicKeysFromFile("git", Settings.Preference.PrivateKey, Settings.Preference.Paraphrase)
-
-			if err != nil {
-				return err
-			}
-
-			_, err = git.PlainClone(repository.Path, false, &git.CloneOptions{
-				Auth: publicKeys,
-				URL:  repository.Clone,
-			})
+			err := GitClone(repository)
 
 			if err != nil {
 				return err

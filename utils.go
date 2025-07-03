@@ -4,12 +4,65 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strconv"
 	"syscall"
 	"time"
 
+	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/khouwdevin/gitomatically/watcher"
 )
+
+func GitClone(repository RepositoryConfig) error {
+	err := os.RemoveAll(repository.Path)
+
+	if err != nil {
+		return err
+	}
+
+	dir := filepath.Dir(repository.Path)
+	dirPerms := os.FileMode(0755)
+	err = os.MkdirAll(dir, dirPerms)
+
+	if err != nil {
+		return err
+	}
+
+	publicKeys, err := ssh.NewPublicKeysFromFile("git", Settings.Preference.PrivateKey, Settings.Preference.Paraphrase)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = git.PlainClone(repository.Path, false, &git.CloneOptions{
+		Auth: publicKeys,
+		URL:  repository.Clone,
+	})
+
+	return err
+}
+
+func GitPull(repository RepositoryConfig) error {
+	publicKeys, err := ssh.NewPublicKeysFromFile("git", Settings.Preference.PrivateKey, Settings.Preference.Paraphrase)
+
+	if err != nil {
+		return err
+	}
+
+	r, err := git.PlainOpen(repository.Path)
+
+	w, err := r.Worktree()
+
+	if err != nil {
+		return err
+	}
+
+	err = w.Pull(&git.PullOptions{RemoteName: "origin", ReferenceName: plumbing.ReferenceName(repository.Branch), Force: false, Auth: publicKeys, Progress: os.Stdout})
+
+	return err
+}
 
 func EnvDebouncedEvents(w *watcher.Watcher) {
 	if w.Self.Timer != nil {
