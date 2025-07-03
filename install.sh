@@ -14,7 +14,7 @@ sudo mkdir -p "$APP_DIR"
 echo "Directory '$APP_DIR' created and permissions set."
 
 # --- Build app ---
-go build -o ./gitomatically ./main.go
+go build
 
 # --- Copy files ---
 sudo cp $(pwd)/"$APP_BINARY" "$APP_DIR"/"$APP_BINARY"
