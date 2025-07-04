@@ -59,7 +59,7 @@ func GitPull(repository RepositoryConfig) error {
 		return err
 	}
 
-	err = w.Pull(&git.PullOptions{RemoteName: "origin", ReferenceName: plumbing.ReferenceName(repository.Branch), Force: false, Auth: publicKeys, Progress: os.Stdout})
+	err = w.Pull(&git.PullOptions{RemoteName: "origin", ReferenceName: plumbing.NewBranchReferenceName(repository.Branch), Force: false, Auth: publicKeys, Progress: os.Stdout})
 
 	return err
 }

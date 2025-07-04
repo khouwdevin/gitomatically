@@ -78,7 +78,7 @@ func PreStart() error {
 					slog.Debug(fmt.Sprintf("CONFIG %v is up to date, continue to next repository", repository.Url))
 					continue
 				} else {
-					slog.Debug(fmt.Sprintf("CONFIG Git clone err output %v", err))
+					slog.Debug(fmt.Sprintf("CONFIG Git pull err output %v", err))
 					return err
 				}
 			}
