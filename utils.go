@@ -59,7 +59,13 @@ func GitPull(repository RepositoryConfig) error {
 		return err
 	}
 
-	err = w.Pull(&git.PullOptions{RemoteName: "origin", ReferenceName: plumbing.NewBranchReferenceName(repository.Branch), Force: false, Auth: publicKeys, Progress: os.Stdout})
+	err = w.Pull(&git.PullOptions{
+		RemoteName:    "origin",
+		ReferenceName: plumbing.NewBranchReferenceName(repository.Branch),
+		Auth:          publicKeys,
+		Progress:      os.Stdout,
+		Force:         false,
+	})
 
 	return err
 }
@@ -122,6 +128,7 @@ func ConfigDebouncedEvents(w *watcher.Watcher) {
 		slog.Info("WATCHER Config file change detected, reinitialize config")
 
 		prevConfig := Settings
+		Settings = Config{}
 		err := InitializeConfig(w.Self.Path)
 
 		if err != nil {
@@ -140,8 +147,8 @@ func ConfigDebouncedEvents(w *watcher.Watcher) {
 			return
 		}
 
-		if prevConfig.Preference.Cron == Settings.Preference.Cron &&
-			(!Settings.Preference.Cron || prevConfig.Preference.Spec == Settings.Preference.Spec) {
+		if prevConfig.Preference.Cron == Settings.Preference.Cron ||
+			prevConfig.Preference.Spec == Settings.Preference.Spec {
 			return
 		}
 
