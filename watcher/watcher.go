@@ -1,7 +1,6 @@
 package watcher
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -35,7 +34,7 @@ func NewWatcher(filePath string, wg *sync.WaitGroup, quit chan os.Signal) (*Watc
 
 	if err != nil {
 		watcher.Close()
-		return nil, errors.New(fmt.Sprintf("Watcher error %v", err))
+		return nil, fmt.Errorf("Watcher error %v", err)
 	}
 
 	_, err = os.Stat(filePath)
@@ -49,14 +48,14 @@ func NewWatcher(filePath string, wg *sync.WaitGroup, quit chan os.Signal) (*Watc
 
 	if err != nil {
 		watcher.Close()
-		return nil, errors.New(fmt.Sprintf("Get absolute path error %v", err))
+		return nil, fmt.Errorf("Get absolute path error %v", err)
 	}
 
 	err = watcher.Add(absConfigPath)
 
 	if err != nil {
 		watcher.Close()
-		return nil, errors.New(fmt.Sprintf("WATCHER Add file to watcher error %v", err))
+		return nil, fmt.Errorf("WATCHER Add file to watcher error %v", err)
 	}
 
 	w := &Watcher{
