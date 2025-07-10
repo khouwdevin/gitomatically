@@ -22,19 +22,25 @@ func IsNewUpdate(r *git.Repository, o *git.PullOptions) (bool, error) {
 		Force:      o.Force,
 	})
 
-	if err != nil && err != git.NoErrAlreadyUpToDate {
-		return false, err
+	if err != nil {
+		if err == git.NoErrAlreadyUpToDate {
+			return false, err
+		} else {
+			return false, err
+		}
 	}
 
 	headRef, err := r.Head()
 
 	if err != nil {
+		slog.Debug("ISNEWUPDATE Error get head")
 		return false, err
 	}
 
 	remoteRef, err := r.Reference(o.ReferenceName, true)
 
 	if err != nil {
+		slog.Debug(fmt.Sprintf("ISNEWUPDATE Error get reference name %v", o.ReferenceName))
 		return false, err
 	}
 
@@ -42,13 +48,14 @@ func IsNewUpdate(r *git.Repository, o *git.PullOptions) (bool, error) {
 		return true, nil
 	}
 
-	return false, err
+	return false, nil
 }
 
 func BackupUntrackedFiles(w *git.Worktree, repositoryPath string) (string, error) {
 	gitStatus, err := w.Status()
 
 	if err != nil {
+		slog.Debug("BACKUPUNTRACKEDFILES Error get worktree status")
 		return "", err
 	}
 
@@ -63,10 +70,16 @@ func BackupUntrackedFiles(w *git.Worktree, repositoryPath string) (string, error
 			data, err := os.ReadFile(fmt.Sprintf("%v/%v", repositoryPath, file))
 
 			if err != nil {
+				slog.Debug(fmt.Sprintf("BACKUPUNTRACKEDFILES Error read file %v/%v", repositoryPath, file))
 				return "", err
 			}
 
-			os.WriteFile(fmt.Sprintf("%v/%v", tempDirPath, file), data, 0755)
+			err = os.WriteFile(fmt.Sprintf("%v/%v", tempDirPath, file), data, 0755)
+
+			if err != nil {
+				slog.Debug(fmt.Sprintf("BACKUPUNTRACKEDFILES Error write file %v/%v", tempDirPath, file))
+				return "", err
+			}
 		}
 	}
 
@@ -77,6 +90,7 @@ func ReturnUntrackedFiles(tempDirPath string, repositoryPath string) error {
 	files, err := os.ReadDir(tempDirPath)
 
 	if err != nil {
+		slog.Debug(fmt.Sprintf("RETURNUNTRACKEDFILES Error read dir %v", tempDirPath))
 		return err
 	}
 
@@ -84,15 +98,22 @@ func ReturnUntrackedFiles(tempDirPath string, repositoryPath string) error {
 		data, err := os.ReadFile(fmt.Sprintf("%v/%v", tempDirPath, file.Name()))
 
 		if err != nil {
+			slog.Debug(fmt.Sprintf("RETURNUNTRACKEDFILES Error read file %v/%v", tempDirPath, file.Name()))
 			return err
 		}
 
-		os.WriteFile(fmt.Sprintf("%v/%v", repositoryPath, file.Name()), data, 0755)
+		err = os.WriteFile(fmt.Sprintf("%v/%v", repositoryPath, file.Name()), data, 0755)
+
+		if err != nil {
+			slog.Debug(fmt.Sprintf("RETURNUNTRACKEDFILES Error write file %v/%v", tempDirPath, file.Name()))
+			return err
+		}
 	}
 
 	err = os.RemoveAll(tempDirPath)
 
 	if err != nil {
+		slog.Debug(fmt.Sprintf("RETURNUNTRACKEDFILES Error remove all %v", tempDirPath))
 		return err
 	}
 
@@ -100,9 +121,11 @@ func ReturnUntrackedFiles(tempDirPath string, repositoryPath string) error {
 }
 
 func GitClone(repository RepositoryConfig) error {
+	slog.Debug(fmt.Sprintf("GITCLONE Clone %v start", repository.Url))
 	err := os.RemoveAll(repository.Path)
 
 	if err != nil {
+		slog.Debug(fmt.Sprintf("GITCLONE Error remove all files from path %v", repository.Path))
 		return err
 	}
 
@@ -111,12 +134,14 @@ func GitClone(repository RepositoryConfig) error {
 	err = os.MkdirAll(dir, dirPerms)
 
 	if err != nil {
+		slog.Debug(fmt.Sprintf("GITCLONE Error create path %v", repository.Path))
 		return err
 	}
 
 	publicKeys, err := ssh.NewPublicKeysFromFile("git", Settings.Preference.PrivateKey, Settings.Preference.Paraphrase)
 
 	if err != nil {
+		slog.Debug(fmt.Sprintf("GITCLONE Error get public keys from file %v", Settings.Preference.PrivateKey))
 		return err
 	}
 
@@ -125,21 +150,31 @@ func GitClone(repository RepositoryConfig) error {
 		URL:  repository.Clone,
 	})
 
+	slog.Debug(fmt.Sprintf("GITCLONE Error do plain clone %v", repository.Url))
+
 	return err
 }
 
 func GitPull(repository RepositoryConfig) error {
+	slog.Debug(fmt.Sprintf("GITPULL Pull %v start", repository.Url))
 	publicKeys, err := ssh.NewPublicKeysFromFile("git", Settings.Preference.PrivateKey, Settings.Preference.Paraphrase)
 
 	if err != nil {
+		slog.Debug("GITPULL Error get public keys from file")
 		return err
 	}
 
 	r, err := git.PlainOpen(repository.Path)
 
+	if err != nil {
+		slog.Debug(fmt.Sprintf("GITPULL Error do plain open %v", repository.Path))
+		return err
+	}
+
 	w, err := r.Worktree()
 
 	if err != nil {
+		slog.Debug("GITPULL Error get worktree")
 		return err
 	}
 
@@ -166,14 +201,19 @@ func GitPull(repository RepositoryConfig) error {
 		err = w.Pull(pullOption)
 
 		if err != nil {
+			slog.Debug(fmt.Sprintf("GITPULL Error pull repository %v", repository.Url))
 			return err
 		}
 
 		if len(tempDirPath) > 0 {
 			err = ReturnUntrackedFiles(tempDirPath, repository.Path)
-		}
 
-		return err
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
 	}
 
 	return nil
