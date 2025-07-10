@@ -15,6 +15,90 @@ import (
 	"github.com/khouwdevin/gitomatically/watcher"
 )
 
+func IsNewUpdate(r *git.Repository, o *git.PullOptions) (bool, error) {
+	err := r.Fetch(&git.FetchOptions{
+		RemoteName: o.RemoteName,
+		Auth:       o.Auth,
+		Force:      o.Force,
+	})
+
+	if err != nil && err != git.NoErrAlreadyUpToDate {
+		return false, err
+	}
+
+	headRef, err := r.Head()
+
+	if err != nil {
+		return false, err
+	}
+
+	remoteRef, err := r.Reference(o.ReferenceName, true)
+
+	if err != nil {
+		return false, err
+	}
+
+	if headRef.Hash() != remoteRef.Hash() {
+		return true, nil
+	}
+
+	return false, err
+}
+
+func BackupUntrackedFiles(w *git.Worktree, repositoryPath string) (string, error) {
+	gitStatus, err := w.Status()
+
+	if err != nil {
+		return "", err
+	}
+
+	if len(gitStatus) == 0 {
+		return "", nil
+	}
+
+	tempDirPath, err := os.MkdirTemp("", "git-untracked-backup-")
+
+	for file, status := range gitStatus {
+		if status.Staging == git.Untracked {
+			data, err := os.ReadFile(fmt.Sprintf("%v/%v", repositoryPath, file))
+
+			if err != nil {
+				return "", err
+			}
+
+			os.WriteFile(fmt.Sprintf("%v/%v", tempDirPath, file), data, 0755)
+		}
+	}
+
+	return tempDirPath, nil
+}
+
+func ReturnUntrackedFiles(tempDirPath string, repositoryPath string) error {
+	files, err := os.ReadDir(tempDirPath)
+
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		data, err := os.ReadFile(fmt.Sprintf("%v/%v", tempDirPath, file.Name()))
+
+		if err != nil {
+			return err
+		}
+
+		os.WriteFile(fmt.Sprintf("%v/%v", repositoryPath, file.Name()), data, 0755)
+	}
+
+	err = os.RemoveAll(tempDirPath)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func GitClone(repository RepositoryConfig) error {
 	err := os.RemoveAll(repository.Path)
 
@@ -59,15 +143,40 @@ func GitPull(repository RepositoryConfig) error {
 		return err
 	}
 
-	err = w.Pull(&git.PullOptions{
+	pullOption := &git.PullOptions{
 		RemoteName:    "origin",
 		ReferenceName: plumbing.NewBranchReferenceName(repository.Branch),
 		Auth:          publicKeys,
-		Progress:      os.Stdout,
 		Force:         false,
-	})
+	}
 
-	return err
+	isNewUpdate, err := IsNewUpdate(r, pullOption)
+
+	if err != nil {
+		return err
+	}
+
+	if isNewUpdate {
+		tempDirPath, err := BackupUntrackedFiles(w, repository.Path)
+
+		if err != nil {
+			return err
+		}
+
+		err = w.Pull(pullOption)
+
+		if err != nil {
+			return err
+		}
+
+		if len(tempDirPath) > 0 {
+			err = ReturnUntrackedFiles(tempDirPath, repository.Path)
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 func EnvDebouncedEvents(w *watcher.Watcher) {
